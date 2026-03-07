@@ -309,7 +309,7 @@ function renderSales(){
   if(q) students=students.filter(s=>s.name.toLowerCase().includes(q)||s.name.includes(q));
   students.sort((a,b)=>a.name.localeCompare(b.name,'ja'));
   const tot=students.reduce((s,st)=>s+st.totalActual,0), totp=students.reduce((s,st)=>s+st.totalPrice,0);
-  document.getElementById('summaryRow').innerHTML='<div class="stat-box"><div class="stat-val">'+students.length+'</div><div class="stat-lbl">表示生徒数</div></div><div class="stat-box"><div class="stat-val">¥'+(tot/10000).toFixed(1)+'<span style="font-size:11px;font-family:inherit">万</span></div><div class="stat-lbl">実績合計</div></div><div class="stat-box"><div class="stat-val">¥'+(totp/10000).toFixed(1)+'<span style="font-size:11px;font-family:inherit">万</span></div><div class="stat-lbl">請求合計</div></div>';
+document.getElementById('summaryRow').innerHTML='<div class="stat-box"><div class="stat-val">'+students.length+'</div><div class="stat-lbl">表示生徒数</div></div><div class="stat-box"><div class="stat-val">¥'+tot.toLocaleString()+'</div><div class="stat-lbl">実績合計</div></div><div class="stat-box"><div class="stat-val">¥'+totp.toLocaleString()+'</div><div class="stat-lbl">請求合計</div></div>';
   if(!students.length){ document.getElementById('studentList').innerHTML='<div class="no-results">該当する生徒が見つかりません</div>'; return; }
   document.getElementById('studentList').innerHTML=students.map(s=>{
     const courses=s.rows.map(r=>r.course).join('・');
