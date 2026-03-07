@@ -260,7 +260,7 @@ function renderTags(){
 function updateTotal(){ const t=COURSES.filter(c=>selected.has(c.id)).reduce((s,c)=>s+c.price,0); document.getElementById('totalAmt').innerHTML='¥'+t.toLocaleString()+'<span>/ 月</span>'; }
 
 // ★ここにGASのウェブアプリURLを貼り付けてください★
-const GAS_URL = 'ここにGASのURLを貼り付け';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
 
 function submitData(){
   const name=document.getElementById('name').value.trim(), grade=document.getElementById('grade').value;
