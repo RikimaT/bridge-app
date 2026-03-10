@@ -443,7 +443,7 @@ function renderManage() {
   list.innerHTML = students.map(s => {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
-    const enrollInfo = activeEnrolls.map(e => e.memo || '').filter(Boolean).join('・') || '—';
+    const enrollInfo = s.courses || (activeEnrolls.map(e => e.memo || '').filter(Boolean).join('・')) || '—';
     const statusBadge = s.isActive
       ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
       : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
