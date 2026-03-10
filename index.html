@@ -133,9 +133,23 @@
 </header>
 <div class="main-tabs">
   <button class="main-tab active" onclick="switchTab('register')">📝 生徒登録</button>
+  <button class="main-tab" onclick="switchTab('manage')">👥 生徒管理</button>
   <button class="main-tab" onclick="switchTab('sales')">📊 売上照会</button>
 </div>
 <div class="content">
+  <div class="tab-pane" id="tab-manage">
+    <div class="section-title">生徒管理</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <input type="search" id="manageSearch" placeholder="🔍 生徒名で検索..." oninput="renderManage()" style="flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:13px;font-family:inherit;font-size:16px">
+      <select id="manageFilter" onchange="renderManage()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:13px;font-family:inherit;font-size:14px;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b949e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 13px center;padding-right:36px;appearance:none;-webkit-appearance:none">
+        <option value="active">在籍中のみ</option>
+        <option value="all">全員</option>
+        <option value="inactive">退会済み</option>
+      </select>
+    </div>
+    <div id="manageStatus" style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px">読み込み中...</div>
+    <div class="student-list" id="manageList"></div>
+  </div>
   <div class="tab-pane active" id="tab-register">
     <div class="grade-banner" id="gradeBanner">🎓 4月以降のため、学年を新年度に自動更新しました</div>
     <div class="section-title">基本情報</div>
@@ -289,7 +303,7 @@ function renderTags(){
 function updateTotal(){ const t=COURSES.filter(c=>selected.has(c.id)).reduce((s,c)=>s+c.price,0); document.getElementById('totalAmt').innerHTML='¥'+t.toLocaleString()+'<span>/ 月</span>'; }
 
 // ★ここにGASのウェブアプリURLを貼り付けてください★
-const GAS_URL = 'ここにGASのURLを貼り付け';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
 
 function submitData(){
   const name=document.getElementById('name').value.trim(), grade=document.getElementById('grade').value;
@@ -315,10 +329,13 @@ function resetForm(){
   selected.clear(); renderGrid(); renderTags(); updateTotal();
 }
 function switchTab(t){
-  document.querySelectorAll('.main-tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='register')||(i===1&&t==='sales')));
+  document.querySelectorAll('.main-tab').forEach(el=>el.classList.remove('active'));
+  const tabs=['register','manage','sales'];
+  document.querySelectorAll('.main-tab').forEach((el,i)=>{ if(tabs[i]===t) el.classList.add('active'); });
   document.querySelectorAll('.tab-pane').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   if(t==='sales') renderSales();
+  if(t==='manage') loadStudents();
 }
 
 
@@ -345,6 +362,129 @@ function renderSales(){
 }
 
 function showToast(msg,isError=false){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast'+(isError?' error':''); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>t.classList.remove('show'),3500); }
+
+/* === 生徒管理 === */
+let studentsCache = [];
+
+function loadStudents() {
+  const status = document.getElementById('manageStatus');
+  const list = document.getElementById('manageList');
+  status.style.display = 'block';
+  status.textContent = '読み込み中...';
+  list.innerHTML = '';
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'getStudents' })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === 'ok') {
+      studentsCache = res.students;
+      status.style.display = 'none';
+      renderManage();
+    } else {
+      status.textContent = 'エラー：' + res.message;
+    }
+  })
+  .catch(() => { status.textContent = '通信エラーが発生しました'; });
+}
+
+function renderManage() {
+  const q = document.getElementById('manageSearch').value.trim().toLowerCase();
+  const filter = document.getElementById('manageFilter').value;
+  const list = document.getElementById('manageList');
+
+  let students = studentsCache;
+  if (filter === 'active') students = students.filter(s => s.isActive);
+  else if (filter === 'inactive') students = students.filter(s => !s.isActive);
+  if (q) students = students.filter(s => s.name.toLowerCase().includes(q));
+
+  students.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+
+  if (!students.length) {
+    list.innerHTML = '<div class="no-results">該当する生徒が見つかりません</div>';
+    return;
+  }
+
+  list.innerHTML = students.map(s => {
+    const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
+    const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
+    const enrollInfo = activeEnrolls.map(e => e.memo || '').filter(Boolean).join('・') || '—';
+    const statusBadge = s.isActive
+      ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
+      : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
+
+    const withdrawBtn = s.isActive ? `
+      <button onclick="openWithdraw('${s.studentID}','${s.name}')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>` : '';
+
+    const changeBtn = s.isActive && activeEnrolls.length > 0 ? `
+      <button onclick="openChangeCourse('${s.studentID}','${s.name}',${JSON.stringify(activeEnrolls).replace(/'/g,"\'")})" style="background:rgba(232,168,76,.1);border:1px solid rgba(232,168,76,.3);border-radius:8px;color:var(--accent);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">コース変更</button>` : '';
+
+    return `<div class="student-card">
+      <div class="sc-header">
+        <div style="min-width:0;flex:1">
+          <div class="sc-name">${s.name}${statusBadge}<span style="font-size:12px;color:var(--text-muted);margin-left:6px">${s.grade}</span></div>
+          <div class="sc-courses-preview" style="margin-top:4px">${enrollInfo}</div>
+        </div>
+        ${totalAmount > 0 ? `<div class="sc-total">¥${totalAmount.toLocaleString()}</div>` : ''}
+      </div>
+      ${s.isActive ? `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${withdrawBtn}${changeBtn}</div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">退会日：${s.withdrawDate || '—'}</div>`}
+    </div>`;
+  }).join('');
+}
+
+function openWithdraw(studentID, name) {
+  const date = new Date().toISOString().split('T')[0];
+  const d = prompt(`${name}さんを退会処理します。\n退会日を入力してください（例：2026/03/31）`, date.replace(/-/g, '/'));
+  if (!d) return;
+  if (!confirm(`${name}さんを ${d} で退会処理しますか？\nEnrollmentsシートのIsActiveがFALSEになります。`)) return;
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '処理中...';
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'withdraw', studentID, withdrawDate: d })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === 'ok') {
+      showToast('✅ ' + name + 'さんを退会処理しました');
+      loadStudents();
+    } else {
+      showToast('エラー：' + res.message, true);
+      btn.disabled = false; btn.textContent = '退会処理';
+    }
+  })
+  .catch(() => { showToast('通信エラー', true); btn.disabled = false; btn.textContent = '退会処理'; });
+}
+
+function openChangeCourse(studentID, name, enrollments) {
+  if (enrollments.length === 1) {
+    const e = enrollments[0];
+    const cur = e.overrideAmount || 0;
+    const newAmt = prompt(`${name}さんのコース変更\n現在の上書き月額：¥${cur.toLocaleString()}\n\n新しい月額を入力してください（数字のみ）`, cur);
+    if (newAmt === null) return;
+    const amt = parseInt(newAmt);
+    if (isNaN(amt)) { showToast('金額が正しくありません', true); return; }
+    const memo = prompt('変更メモ（任意）', e.memo || '');
+    if (memo === null) return;
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'changeCourse', enrollID: e.enrollID, newAmount: amt, memo })
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'ok') { showToast('✅ コースを変更しました'); loadStudents(); }
+      else showToast('エラー：' + res.message, true);
+    })
+    .catch(() => showToast('通信エラー', true));
+  } else {
+    showToast('複数コースの場合はスプレッドシートで変更してください', true);
+  }
+}
 
 /* === グラフ === */
 let chartInstance=null, chartVisible=false;
