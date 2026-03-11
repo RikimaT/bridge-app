@@ -303,7 +303,7 @@ const CUR_NENDO = CUR_MONTH >= 2 ? CUR_YEAR : CUR_YEAR - 1;
 const IS_NEW_NENDO = CUR_MONTH >= 2;
 const NENDO = CUR_NENDO;
 
-document.getElementById('headerSub').textContent = '生徒管理システム  ' + CUR_NENDO + '年度 ';
+document.getElementById('headerSub').textContent = '生徒管理システム  ' + CUR_NENDO + '年度';
 
 let activeNendo = String(CUR_NENDO);
 const AVAILABLE_NENDOS = Object.keys(ALL_SALES).filter(n => parseInt(n) <= CUR_NENDO).sort();
@@ -325,14 +325,14 @@ function buildMonthButtons(){
   const months=[];
   for(let m=2;m<=12;m++){
     const passed=CUR_NENDO>nendo||(CUR_NENDO===nendo&&CUR_MONTH>=m);
-    if(passed) months.push({label:m+'月 ',key:nendo+'年 '+m+'月 '});
+    if(passed) months.push({label:m+'月',key:nendo+'年'+m+'月'});
   }
   const janY=nendo+1;
   const janPassed=CUR_YEAR>janY||(CUR_YEAR===janY&&CUR_MONTH>=1);
-  if(janPassed) months.push({label:'1月 ',key:janY+'年1月 '});
+  if(janPassed) months.push({label:'1月',key:janY+'年1月'});
   let curKey;
   if(activeNendo===String(CUR_NENDO)){
-    curKey=CUR_MONTH===1?(nendo+1)+'年1月 ':nendo+'年 '+CUR_MONTH+'月 ';
+    curKey=CUR_MONTH===1?(nendo+1)+'年1月':nendo+'年'+CUR_MONTH+'月';
   } else {
     curKey=months[months.length-1]?.key||'';
   }
