@@ -123,12 +123,11 @@
   .chart-toggle-btn { background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text-muted); padding:10px 20px; font-size:13px; cursor:pointer; font-family:inherit; transition:all .2s; }
   .chart-toggle-btn.open { border-color:var(--accent); color:var(--accent); }
   
-  /* 編集モーダル */
   .edit-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:none; align-items:flex-end; justify-content:center; }
   .edit-overlay.open { display:flex; }
   .edit-modal { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius) var(--radius) 0 0; width:100%; max-width:680px; padding:20px 16px 40px; max-height:90vh; overflow-y:auto; animation:fadeUp .3s ease both; }
   .edit-modal-title { font-size:15px; font-weight:700; color:var(--accent); margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; }
-  .edit-modal-close { background:none; border:none; color:var(--text-muted); font-size:22px; cursor:pointer; padding:4px; min-width:36px; min-height:36px; display:flex; align-items:center; justify-content:center; }
+  .edit-modal-close { background:none; border:none; color:var(--text-muted); font-size:22px; cursor:pointer; min-width:36px; min-height:36px; }
   .edit-course-grid { display:grid; grid-template-columns:1fr; gap:6px; margin-top:8px; }
   @media(min-width:420px){ .edit-course-grid { grid-template-columns:1fr 1fr; } }
   .edit-save-btn { width:100%; background:var(--accent); color:#000; border:none; border-radius:var(--radius); padding:16px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; min-height:52px; margin-top:16px; }
@@ -165,7 +164,7 @@
     <div class="grade-banner" id="gradeBanner">   4月以降のため、学年を新年度に自動更新しました </div>
     <div class="section-title">基本情報 </div>
     <div class="row2">
-      <div class="field"><label>氏名  *</label><input type="text" id="name" placeholder="山田花子"></div>
+      <div class="field"><label>氏名  *</label><input type="text" id="name" placeholder="山田  花子 "></div>
       <div class="field"><label>学年  *</label>
         <select id="grade">
           <option value="">選択してください </option>
@@ -218,7 +217,7 @@
         </select>
       </div>
     </div>
-    <div class="field"><label>メモ </label><input type="text" id="memo" placeholder="備考があれば入力"></div>
+    <div class="field"><label>メモ </label><input type="text" id="memo" placeholder="備考があれば入力 "></div>
     <div class="section-title" style="margin-top:22px">コース選択  複数可  </div>
     <div class="course-tabs" id="courseTabs"></div>
     <div class="course-grid" id="courseGrid"></div>
@@ -245,12 +244,11 @@
     <div class="student-list" id="studentList"></div>
   </div>
 </div>
-<!-- 編集モーダル -->
 <div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
   <div class="edit-modal">
     <div class="edit-modal-title">
-      <span>✏️ 生徒情報を編集</span>
-      <button class="edit-modal-close" onclick="closeEditModal()">✕</button>
+      <span>&#9999;&#65039; 生徒情報を編集</span>
+      <button class="edit-modal-close" onclick="closeEditModal()">&#10005;</button>
     </div>
     <input type="hidden" id="editStudentID">
     <div class="section-title">基本情報</div>
@@ -284,14 +282,13 @@
       </div>
     </div>
     <div class="field"><label>メモ</label><input type="text" id="editMemo" placeholder="備考があれば入力"></div>
-    <div class="section-title" style="margin-top:18px">コース変更（チェックで選択）</div>
+    <div class="section-title" style="margin-top:18px">コース変更</div>
     <div class="course-tabs" id="editCourseTabs"></div>
     <div class="edit-course-grid" id="editCourseGrid"></div>
     <div style="margin-top:10px;padding:12px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--text-muted)" id="editSelectedInfo">選択中：なし</div>
-    <button class="edit-save-btn" id="editSaveBtn" onclick="saveStudent()">💾 保存する</button>
+    <button class="edit-save-btn" id="editSaveBtn" onclick="saveStudent()">&#128190; 保存する</button>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 <script>
 /* === 売上データ  全年度   === */
@@ -306,7 +303,7 @@ const CUR_NENDO = CUR_MONTH >= 2 ? CUR_YEAR : CUR_YEAR - 1;
 const IS_NEW_NENDO = CUR_MONTH >= 2;
 const NENDO = CUR_NENDO;
 
-document.getElementById('headerSub').textContent = '生徒管理システム  ' + CUR_NENDO + '年度';
+document.getElementById('headerSub').textContent = '生徒管理システム  ' + CUR_NENDO + '年度 ';
 
 let activeNendo = String(CUR_NENDO);
 const AVAILABLE_NENDOS = Object.keys(ALL_SALES).filter(n => parseInt(n) <= CUR_NENDO).sort();
@@ -328,14 +325,14 @@ function buildMonthButtons(){
   const months=[];
   for(let m=2;m<=12;m++){
     const passed=CUR_NENDO>nendo||(CUR_NENDO===nendo&&CUR_MONTH>=m);
-    if(passed) months.push({label:m+'月',key:nendo+'年'+m+'月'});
+    if(passed) months.push({label:m+'月 ',key:nendo+'年 '+m+'月 '});
   }
   const janY=nendo+1;
   const janPassed=CUR_YEAR>janY||(CUR_YEAR===janY&&CUR_MONTH>=1);
-  if(janPassed) months.push({label:'1月',key:janY+'年1月'});
+  if(janPassed) months.push({label:'1月 ',key:janY+'年1月 '});
   let curKey;
   if(activeNendo===String(CUR_NENDO)){
-    curKey=CUR_MONTH===1?(nendo+1)+'年1月':nendo+'年'+CUR_MONTH+'月';
+    curKey=CUR_MONTH===1?(nendo+1)+'年1月 ':nendo+'年 '+CUR_MONTH+'月 ';
   } else {
     curKey=months[months.length-1]?.key||'';
   }
@@ -343,53 +340,53 @@ function buildMonthButtons(){
   document.getElementById('monthBtns').innerHTML=months.map(function(m){
     return '<button class="mbtn '+(m.key===activeMonth?'active':'')+'" data-m="'+m.key+'" onclick="setMonth(this.dataset.m)">'+m.label+'</button>';
   }).join('');
-  document.getElementById('salesTitle').textContent=activeNendo+'年度月別売上照会';
-  document.getElementById('nendoLabel').innerHTML='表示期間  <span>'+nendo+'年2月〜  '+(nendo+1)+'年1月 </span>　現在  <span>'+CUR_YEAR+'年'+CUR_MONTH+'月 </span>';
+  document.getElementById('salesTitle').textContent=activeNendo+'年度  月別売上照会 ';
+  document.getElementById('nendoLabel').innerHTML='表示期間  <span>'+nendo+'年2月  〜  '+(nendo+1)+'年1月 </span>　現在  <span>'+CUR_YEAR+'年 '+CUR_MONTH+'月 </span>';
 }
 /* === コースマスタ  === */
 const COURSES = [
-  {id:'c1',区分:'ブリッジ(塾)',name:'ブリッジ小学生通い放題',grade:'小学生',price:17000},
-  {id:'c2',区分:'ブリッジ(塾)',name:'ブリッジ小学生週3',grade:'小学生',price:13000},
-  {id:'c3',区分:'ブリッジ(塾)',name:'ブリッジ小学生週2',grade:'小学生',price:9000},
-  {id:'c4',区分:'ブリッジ(塾)',name:'ブリッジ中1通い放題',grade:'中1',price:27000},
-  {id:'c5',区分:'ブリッジ(塾)',name:'ブリッジ中1週3',grade:'中1',price:20500},
-  {id:'c6',区分:'ブリッジ(塾)',name:'ブリッジ中1週2',grade:'中1',price:14000},
-  {id:'c7',区分:'ブリッジ(塾)',name:'ブリッジ中2通い放題',grade:'中2',price:37000},
-  {id:'c8',区分:'ブリッジ(塾)',name:'ブリッジ中2週3',grade:'中2',price:28000},
-  {id:'c9',区分:'ブリッジ(塾)',name:'ブリッジ中2週2',grade:'中2',price:19000},
-  {id:'c10',区分:'ブリッジ(塾)',name:'ブリッジ中3通い放題',grade:'中3',price:47000},
-  {id:'c11',区分:'ブリッジ(塾)',name:'ブリッジ中3週3',grade:'中3',price:35500},
-  {id:'c12',区分:'ブリッジ(塾)',name:'ブリッジ中3週2',grade:'中3',price:24000},
-  {id:'c13',区分:'ブリッジ(塾)',name:'年間成績設計プレミアム加算  ',grade:'共通',price:5500},
-  {id:'c14',区分:'ブリッジ国語',name:'国語通常  60分週1 ',grade:'幼児〜小6',price:14200},
-  {id:'c15',区分:'ブリッジ国語',name:'国語通常  90分週1 ',grade:'幼児〜小6',price:19700},
-  {id:'c16',区分:'ブリッジ国語',name:'国語塾長コース  60分週1 ',grade:'幼児〜小6',price:22000},
-  {id:'c17',区分:'ブリッジ国語',name:'国語塾長コース  90分週1 ',grade:'幼児〜小6',price:33000},
-  {id:'c18',区分:'りんご算数',name:'りんごの算数年45回',grade:'幼児〜小6',price:16500},
-  {id:'c19',区分:'りんご算数',name:'りんごの算数年90回',grade:'幼児〜小6',price:29700},
-  {id:'c20',区分:'りんご算数',name:'りんごの算数年135回',grade:'幼児〜小6',price:42000},
-  {id:'c21',区分:'りんごそろばん',name:'りんごのそろばん年45回',grade:'幼児〜小学生',price:4800},
-  {id:'c22',区分:'りんごそろばん',name:'りんごのそろばん年90回',grade:'幼児〜小学生',price:7000},
-  {id:'c23',区分:'書道教室',name:'書道幼児〜中学生月額',grade:'幼児〜中学生',price:4400},
-  {id:'c24',区分:'共通',name:'休会費',grade:'共通',price:1100},
-  {id:'c25',区分:'その他',name:'自習室',grade:'共通',price:3300},
-  {id:'c26',区分:'その他',name:'テスト前講習',grade:'共通',price:5500},
-  {id:'c27',区分:'その他',name:'春期講習',grade:'共通',price:11000},
-  {id:'c28',区分:'その他',name:'冬季講習',grade:'共通',price:3300},
+  {id:'c1',区分:'ブリッジ(塾)',name:'ブリッジ  小学生  通い放題 ',grade:'小学生 ',price:17000},
+  {id:'c2',区分:'ブリッジ(塾)',name:'ブリッジ  小学生  週3',grade:'小学生 ',price:13000},
+  {id:'c3',区分:'ブリッジ(塾)',name:'ブリッジ  小学生  週2',grade:'小学生 ',price:9000},
+  {id:'c4',区分:'ブリッジ(塾)',name:'ブリッジ  中1通い放題 ',grade:'中1',price:27000},
+  {id:'c5',区分:'ブリッジ(塾)',name:'ブリッジ  中1週3',grade:'中1',price:20500},
+  {id:'c6',区分:'ブリッジ(塾)',name:'ブリッジ  中1週2',grade:'中1',price:14000},
+  {id:'c7',区分:'ブリッジ(塾)',name:'ブリッジ  中2通い放題 ',grade:'中2',price:37000},
+  {id:'c8',区分:'ブリッジ(塾)',name:'ブリッジ  中2週3',grade:'中2',price:28000},
+  {id:'c9',区分:'ブリッジ(塾)',name:'ブリッジ  中2週2',grade:'中2',price:19000},
+  {id:'c10',区分:'ブリッジ(塾)',name:'ブリッジ  中3通い放題 ',grade:'中3',price:47000},
+  {id:'c11',区分:'ブリッジ(塾)',name:'ブリッジ  中3週3',grade:'中3',price:35500},
+  {id:'c12',区分:'ブリッジ(塾)',name:'ブリッジ  中3週2',grade:'中3',price:24000},
+  {id:'c13',区分:'ブリッジ(塾)',name:'年間成績設計プレミアム  加算  ',grade:'共通 ',price:5500},
+  {id:'c14',区分:'ブリッジ国語 ',name:'国語  通常  60分  週1 ',grade:'幼児〜小6',price:14200},
+  {id:'c15',区分:'ブリッジ国語 ',name:'国語  通常  90分  週1 ',grade:'幼児〜小6',price:19700},
+  {id:'c16',区分:'ブリッジ国語 ',name:'国語  塾長コース  60分  週1 ',grade:'幼児〜小6',price:22000},
+  {id:'c17',区分:'ブリッジ国語 ',name:'国語  塾長コース  90分  週1 ',grade:'幼児〜小6',price:33000},
+  {id:'c18',区分:'りんご算数 ',name:'りんごの算数  年45回 ',grade:'幼児〜小6',price:16500},
+  {id:'c19',区分:'りんご算数 ',name:'りんごの算数  年90回 ',grade:'幼児〜小6',price:29700},
+  {id:'c20',区分:'りんご算数 ',name:'りんごの算数  年135回 ',grade:'幼児〜小6',price:42000},
+  {id:'c21',区分:'りんごそろばん ',name:'りんごのそろばん  年45回 ',grade:'幼児〜小学生 ',price:4800},
+  {id:'c22',区分:'りんごそろばん ',name:'りんごのそろばん  年90回 ',grade:'幼児〜小学生 ',price:7000},
+  {id:'c23',区分:'書道教室 ',name:'書道  幼児〜中学生  月額 ',grade:'幼児〜中学生 ',price:4400},
+  {id:'c24',区分:'共通 ',name:'休会費 ',grade:'共通 ',price:1100},
+  {id:'c25',区分:'その他 ',name:'自習室 ',grade:'共通 ',price:3300},
+  {id:'c26',区分:'その他 ',name:'テスト前講習 ',grade:'共通 ',price:5500},
+  {id:'c27',区分:'その他 ',name:'春期講習 ',grade:'共通 ',price:11000},
+  {id:'c28',区分:'その他 ',name:'冬季講習 ',grade:'共通 ',price:3300},
 ];
-const CTABS = ['すべて','ブリッジ(塾)','ブリッジ国語','りんご算数','りんごそろばん','書道教室','その他','共通'];
-let activeCtab='すべて', selected=new Set();
+const CTABS = ['すべて ','ブリッジ(塾)','ブリッジ国語 ','りんご算数 ','りんごそろばん ','書道教室 ','その他 ','共通 '];
+let activeCtab='すべて ', selected=new Set();
 
-function renderCtabs(){ document.getElementById('courseTabs').innerHTML=CTABS.map(t=>'<button class="ctab '+(t===activeCtab?'active':'')+'" onclick="setCtab(\\''+t+'\\')">'+t+'</button>').join(''); }
+function renderCtabs(){ document.getElementById('courseTabs').innerHTML=CTABS.map(t=>'<button class="ctab '+(t===activeCtab?'active':'')+'" onclick="setCtab(\''+t+'\')">'+t+'</button>').join(''); }
 function setCtab(t){ activeCtab=t; renderCtabs(); renderGrid(); }
 function renderGrid(){
-  const list=activeCtab==='すべて'?COURSES:COURSES.filter(c=>c.区分 ===activeCtab);
-  document.getElementById('courseGrid').innerHTML=list.map(c=>'<div class="course-item '+(selected.has(c.id)?'selected':'')+'" onclick="toggleCourse(\\''+c.id+'\\')"><div style="flex:1;min-width:0"><div class="cname">'+c.name+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+c.grade+'</div></div><div style="text-align:right;flex-shrink:0"><div class="cprice">¥'+c.price.toLocaleString()+'</div><div class="ccheck" style="margin-left:auto;margin-top:5px">'+(selected.has(c.id)?'✓ ':'')+'</div></div></div>').join('');
+  const list=activeCtab==='すべて '?COURSES:COURSES.filter(c=>c.区分 ===activeCtab);
+  document.getElementById('courseGrid').innerHTML=list.map(c=>'<div class="course-item '+(selected.has(c.id)?'selected':'')+'" onclick="toggleCourse(\''+c.id+'\')"><div style="flex:1;min-width:0"><div class="cname">'+c.name+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+c.grade+'</div></div><div style="text-align:right;flex-shrink:0"><div class="cprice">¥'+c.price.toLocaleString()+'</div><div class="ccheck" style="margin-left:auto;margin-top:5px">'+(selected.has(c.id)?'✓ ':'')+'</div></div></div>').join('');
 }
 function toggleCourse(id){ selected.has(id)?selected.delete(id):selected.add(id); renderGrid(); renderTags(); updateTotal(); }
 function renderTags(){
   const items=COURSES.filter(c=>selected.has(c.id));
-  document.getElementById('selectedTags').innerHTML=items.length?'<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">選択中  </div>'+items.map(c=>'<span class="stag">'+c.name+'<button onclick="toggleCourse(\\''+c.id+'\\')">×</button></span>').join(''):'';
+  document.getElementById('selectedTags').innerHTML=items.length?'<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">選択中  </div>'+items.map(c=>'<span class="stag">'+c.name+'<button onclick="toggleCourse(\''+c.id+'\')">×</button></span>').join(''):'';
 }
 function updateTotal(){ const t=COURSES.filter(c=>selected.has(c.id)).reduce((s,c)=>s+c.price,0); document.getElementById('totalAmt').innerHTML='¥'+t.toLocaleString()+'<span>/ 月 </span>'; }
 
@@ -398,9 +395,9 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHD
 
 function submitData(){
   const name=document.getElementById('name').value.trim(), grade=document.getElementById('grade').value;
-  if(!name||!grade){ showToast('氏名と学年は必須です',true); return; }
-  if(!selected.size){ showToast('コースを1つ以上選択してください',true); return; }
-  const courses=COURSES.filter(c=>selected.has(c.id)).map(c=>c.name).join('、');
+  if(!name||!grade){ showToast('氏名と学年は必須です ',true); return; }
+  if(!selected.size){ showToast('コースを1つ以上選択してください ',true); return; }
+  const courses=COURSES.filter(c=>selected.has(c.id)).map(c=>c.name).join('、 ');
   const total=COURSES.filter(c=>selected.has(c.id)).reduce((s,c)=>s+c.price,0);
   const payload={action:'addStudent',name,grade,school:document.getElementById('school').value,startDate:document.getElementById('startDate').value,courses,totalAmount:total,memo:document.getElementById('memo').value};
   const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.textContent='送信中...';
@@ -409,9 +406,9 @@ function submitData(){
     .then(res=>{
       if(res.status==='ok'){ showToast('✅  '+name+'さんを登録しました  '); resetForm(); }
       else { showToast('登録エラー  '+res.message, true); }
-      btn.disabled=false; btn.textContent='   Googleスプレッドシートに登録する';
+      btn.disabled=false; btn.textContent='   Googleスプレッドシートに登録する ';
     })
-    .catch(()=>{ showToast('通信エラーが発生しました',true); btn.disabled=false; btn.textContent='   Googleスプレッドシートに登録する'; });
+    .catch(()=>{ showToast('通信エラーが発生しました ',true); btn.disabled=false; btn.textContent='   Googleスプレッドシートに登録する '; });
 }
 function resetForm(){
   ['name','memo'].forEach(id=>document.getElementById(id).value='');
@@ -446,9 +443,9 @@ function renderSales(){
   document.getElementById('summaryRow').innerHTML='<div class="stat-box"><div class="stat-val">'+students.length+'</div><div class="stat-lbl">表示生徒数 </div></div><div class="stat-box"><div class="stat-val">¥'+tot.toLocaleString()+'</div><div class="stat-lbl">実績合計 </div></div><div class="stat-box"><div class="stat-val">¥'+totp.toLocaleString()+'</div><div class="stat-lbl">請求合計 </div></div>';
   if(!students.length){ document.getElementById('studentList').innerHTML='<div class="no-results">該当する生徒が見つかりません </div>'; return; }
   document.getElementById('studentList').innerHTML=students.map(s=>{
-    const courses=s.rows.map(r=>r.course).join('・');
+    const courses=s.rows.map(r=>r.course).join('・ ');
     const detail=s.rows.map(r=>'<div class="detail-row"><div class="detail-top"><span class="detail-course">'+r.course+(r.note?' ('+r.note+')':'')+'</span><div class="detail-prices"><span class="detail-price">¥'+r.price.toLocaleString()+'</span>'+(r.actual!==null?'<span class="detail-actual">→  ¥'+r.actual.toLocaleString()+'</span>':'<span class="detail-pending">未確定 </span>')+'</div></div></div>').join('');
-    return '<div class="student-card" onclick="this.classList.toggle(\\'expanded\\')"><div class="sc-header"><div style="min-width:0;flex:1"><div class="sc-name">'+s.name+'</div><div class="sc-courses-preview">'+courses+'</div></div><div class="sc-total">¥'+s.totalActual.toLocaleString()+'</div></div><div class="sc-detail">'+detail+'</div></div>';
+    return '<div class="student-card" onclick="this.classList.toggle(\'expanded\')"><div class="sc-header"><div style="min-width:0;flex:1"><div class="sc-name">'+s.name+'</div><div class="sc-courses-preview">'+courses+'</div></div><div class="sc-total">¥'+s.totalActual.toLocaleString()+'</div></div><div class="sc-detail">'+detail+'</div></div>';
   }).join('');
 }
 
@@ -478,26 +475,19 @@ function loadStudents() {
       status.textContent = 'エラー  ' + res.message;
     }
   })
-  .catch(() => { status.textContent = '通信エラーが発生しました'; });
+  .catch(() => { status.textContent = '通信エラーが発生しました '; });
 }
 
 function renderManage() {
   const q = document.getElementById('manageSearch').value.trim().toLowerCase();
   const filter = document.getElementById('manageFilter').value;
   const list = document.getElementById('manageList');
-
   let students = studentsCache;
   if (filter === 'active') students = students.filter(s => s.isActive);
   else if (filter === 'inactive') students = students.filter(s => !s.isActive);
   if (q) students = students.filter(s => s.name.toLowerCase().includes(q));
-
   students.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-
-  if (!students.length) {
-    list.innerHTML = '<div class="no-results">該当する生徒が見つかりません</div>';
-    return;
-  }
-
+  if (!students.length) { list.innerHTML = '<div class="no-results">該当する生徒が見つかりません</div>'; return; }
   list.innerHTML = students.map(s => {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
@@ -505,28 +495,26 @@ function renderManage() {
     const statusBadge = s.isActive
       ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
       : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
-
-    const editBtn = s.isActive ? `<button onclick="openEditModal('${s.studentID}')" style="background:rgba(232,168,76,.1);border:1px solid rgba(232,168,76,.3);border-radius:8px;color:var(--accent);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">✏️ 編集</button>` : '';
-    const withdrawBtn = s.isActive ? `<button onclick="openWithdraw('${s.studentID}','${s.name}')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>` : '';
-
-    return `<div class="student-card">
-      <div class="sc-header">
-        <div style="min-width:0;flex:1">
-          <div class="sc-name">${s.name}${statusBadge}<span style="font-size:12px;color:var(--text-muted);margin-left:6px">${s.grade}</span></div>
-          <div class="sc-courses-preview" style="margin-top:4px">${enrollInfo}</div>
-        </div>
-        ${totalAmount > 0 ? `<div class="sc-total">¥${totalAmount.toLocaleString()}</div>` : ''}
-      </div>
-      ${s.isActive ? `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${editBtn}${withdrawBtn}</div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">退会日：${s.withdrawDate}</div>`}
-    </div>`;
+    const sid = s.studentID;
+    const sname = s.name.replace(/'/g, "\\'");
+    const editBtn = s.isActive ? '<button onclick="openEditModal(\'' + sid + '\')" style="background:rgba(232,168,76,.1);border:1px solid rgba(232,168,76,.3);border-radius:8px;color:var(--accent);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">✏️ 編集</button>' : '';
+    const withdrawBtn = s.isActive ? '<button onclick="openWithdraw(\'' + sid + '\',\'' + sname + '\')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>' : '';
+    return '<div class="student-card">'
+      + '<div class="sc-header"><div style="min-width:0;flex:1">'
+      + '<div class="sc-name">' + s.name + statusBadge + '<span style="font-size:12px;color:var(--text-muted);margin-left:6px">' + s.grade + '</span></div>'
+      + '<div class="sc-courses-preview" style="margin-top:4px">' + enrollInfo + '</div></div>'
+      + (totalAmount > 0 ? '<div class="sc-total">¥' + totalAmount.toLocaleString() + '</div>' : '')
+      + '</div>'
+      + (s.isActive ? '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">' + editBtn + withdrawBtn + '</div>' : '<div style="font-size:12px;color:var(--text-muted);margin-top:8px">退会日：' + s.withdrawDate + '</div>')
+      + '</div>';
   }).join('');
 }
 
 function openWithdraw(studentID, name) {
   const date = new Date().toISOString().split('T')[0];
-  const d = prompt(`${name}さんを退会処理します。 \退会日を入力してください例  2026/03/31 `, date.replace(/-/g, '/'));
+  const d = prompt(`${name}さんを退会処理します。退会日を入力してください  例  2026/03/31 `, date.replace(/-/g, '/'));
   if (!d) return;
-  if (!confirm(`${name}さんを  ${d} で退会処理しますか  \Enrollmentsシートの IsActiveが FALSEになります。 `)) return;
+  if (!confirm(`${name}さんを  ${d} で退会処理しますか  Enrollmentsシートの IsActiveが FALSEになります。 `)) return;
 
   const btn = event.target;
   btn.disabled = true; btn.textContent = '処理中...';
@@ -538,50 +526,38 @@ function openWithdraw(studentID, name) {
   .then(r => r.json())
   .then(res => {
     if (res.status === 'ok') {
-      showToast('✅  ' + name + 'さんを退会処理しました');
+      showToast('✅  ' + name + 'さんを退会処理しました ');
       loadStudents();
     } else {
       showToast('エラー  ' + res.message, true);
-      btn.disabled = false; btn.textContent = '退会処理';
+      btn.disabled = false; btn.textContent = '退会処理 ';
     }
   })
-  .catch(() => { showToast('通信エラー', true); btn.disabled = false; btn.textContent = '退会処理'; });
+  .catch(() => { showToast('通信エラー ', true); btn.disabled = false; btn.textContent = '退会処理 '; });
 }
 
-function openChangeCourse(studentID, name, enrollments) {
-  openEditModal(studentID);
-}
+function openChangeCourse(studentID) { openEditModal(studentID); }
 
-/* === 編集モーダル === */
 let editCtabActive = 'すべて';
 let editSelected = new Set();
 
 function openEditModal(studentID) {
   const s = studentsCache.find(x => x.studentID === studentID);
   if (!s) return;
-
   document.getElementById('editStudentID').value = studentID;
   document.getElementById('editName').value = s.name || '';
   document.getElementById('editGrade').value = s.grade || '';
   document.getElementById('editSchool').value = s.school || '';
   document.getElementById('editMemo').value = s.memo || '';
-
-  // 既存コース名からマッチング
   editSelected = new Set();
   if (s.courses) {
     const courseNames = s.courses.split(/[、,・]+/).map(c => c.trim());
-    COURSES.forEach(c => {
-      if (courseNames.some(n => c.name.includes(n) || n.includes(c.name))) {
-        editSelected.add(c.id);
-      }
-    });
+    COURSES.forEach(c => { if (courseNames.some(n => c.name.includes(n) || n.includes(c.name))) editSelected.add(c.id); });
   }
-
   editCtabActive = 'すべて';
   renderEditCourseTabs();
   renderEditCourseGrid();
   updateEditSelectedInfo();
-
   document.getElementById('editOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -592,46 +568,35 @@ function closeEditModal() {
 }
 
 function renderEditCourseTabs() {
-  const tabs = ['すべて', ...new Set(COURSES.map(c => c['区分']))];
-  document.getElementById('editCourseTabs').innerHTML = tabs.map(t =>
-    `<button class="ctab${t === editCtabActive ? ' active' : ''}" onclick="setEditCtab('${t}')">${t}</button>`
-  ).join('');
+  const tabs = ['すべて'].concat([...new Set(COURSES.map(c => c['区分']))]);
+  document.getElementById('editCourseTabs').innerHTML = tabs.map(function(t) {
+    return '<button class="ctab' + (t === editCtabActive ? ' active' : '') + '" onclick="setEditCtab(this.dataset.t)" data-t="' + t + '">' + t + '</button>';
+  }).join('');
 }
 
-function setEditCtab(t) {
-  editCtabActive = t;
-  renderEditCourseTabs();
-  renderEditCourseGrid();
-}
+function setEditCtab(t) { editCtabActive = t; renderEditCourseTabs(); renderEditCourseGrid(); }
 
 function renderEditCourseGrid() {
   const filtered = editCtabActive === 'すべて' ? COURSES : COURSES.filter(c => c['区分'] === editCtabActive);
-  document.getElementById('editCourseGrid').innerHTML = filtered.map(c => {
+  document.getElementById('editCourseGrid').innerHTML = filtered.map(function(c) {
     const sel = editSelected.has(c.id);
-    return `<div class="course-item${sel ? ' selected' : ''}" onclick="toggleEditCourse('${c.id}')">
-      <div><div class="cname">${c.name}</div><div class="cprice">¥${c.price.toLocaleString()}/月</div></div>
-      <div class="ccheck">${sel ? '✓' : ''}</div>
-    </div>`;
+    return '<div class="course-item' + (sel ? ' selected' : '') + '" onclick="toggleEditCourse(this.dataset.id)" data-id="' + c.id + '">'
+      + '<div><div class="cname">' + c.name + '</div><div class="cprice">¥' + c.price.toLocaleString() + '/月</div></div>'
+      + '<div class="ccheck">' + (sel ? '✓' : '') + '</div></div>';
   }).join('');
 }
 
 function toggleEditCourse(id) {
-  if (editSelected.has(id)) editSelected.delete(id);
-  else editSelected.add(id);
-  renderEditCourseGrid();
-  updateEditSelectedInfo();
+  if (editSelected.has(id)) editSelected.delete(id); else editSelected.add(id);
+  renderEditCourseGrid(); updateEditSelectedInfo();
 }
 
 function updateEditSelectedInfo() {
   const selected = COURSES.filter(c => editSelected.has(c.id));
-  if (!selected.length) {
-    document.getElementById('editSelectedInfo').textContent = '選択中：なし（コース変更しない場合はそのまま保存可）';
-  } else {
-    const names = selected.map(c => c.name).join('、');
-    const total = selected.reduce((s, c) => s + c.price, 0);
-    document.getElementById('editSelectedInfo').innerHTML =
-      `<span style="color:var(--accent);font-weight:600">選択中：</span>${names}<br><span style="color:var(--accent2)">月額合計：¥${total.toLocaleString()}</span>`;
-  }
+  const el = document.getElementById('editSelectedInfo');
+  if (!selected.length) { el.textContent = '選択中：なし（コース変更しない場合はそのまま保存可）'; return; }
+  el.innerHTML = '<span style="color:var(--accent);font-weight:600">選択中：</span>' + selected.map(c => c.name).join('、')
+    + '<br><span style="color:var(--accent2)">月額合計：¥' + selected.reduce((s, c) => s + c.price, 0).toLocaleString() + '</span>';
 }
 
 function saveStudent() {
@@ -640,38 +605,22 @@ function saveStudent() {
   const grade = document.getElementById('editGrade').value;
   const school = document.getElementById('editSchool').value;
   const memo = document.getElementById('editMemo').value.trim();
-
   if (!name) { showToast('氏名を入力してください', true); return; }
-
   const selectedCourses = COURSES.filter(c => editSelected.has(c.id));
   const coursesStr = selectedCourses.map(c => c.name).join('、');
   const totalAmount = selectedCourses.reduce((s, c) => s + c.price, 0);
-
   const btn = document.getElementById('editSaveBtn');
-  btn.disabled = true;
-  btn.textContent = '保存中...';
-
+  btn.disabled = true; btn.textContent = '保存中...';
   fetch(GAS_URL, {
     method: 'POST',
     body: JSON.stringify({ action: 'updateStudent', studentID, name, grade, school, memo, courses: coursesStr, totalAmount })
   })
   .then(r => r.json())
   .then(res => {
-    if (res.status === 'ok') {
-      showToast('✅ ' + name + 'さんの情報を更新しました');
-      closeEditModal();
-      loadStudents();
-    } else {
-      showToast('エラー：' + res.message, true);
-      btn.disabled = false;
-      btn.textContent = '💾 保存する';
-    }
+    if (res.status === 'ok') { showToast('✅ ' + name + 'さんの情報を更新しました'); closeEditModal(); loadStudents(); }
+    else { showToast('エラー：' + res.message, true); btn.disabled = false; btn.textContent = '💾 保存する'; }
   })
-  .catch(() => {
-    showToast('通信エラー', true);
-    btn.disabled = false;
-    btn.textContent = '💾 保存する';
-  });
+  .catch(() => { showToast('通信エラー', true); btn.disabled = false; btn.textContent = '💾 保存する'; });
 }
 
 let chartInstance=null, chartVisible=false;
@@ -680,7 +629,7 @@ function toggleChart(){
   const canvas=document.getElementById('salesChart');
   const btn=document.getElementById('chartToggleBtn');
   canvas.style.display=chartVisible?'block':'none';
-  btn.textContent=chartVisible?'   グラフを非表示':'   グラフを表示';
+  btn.textContent=chartVisible?'   グラフを非表示 ':'   グラフを表示 ';
   btn.classList.toggle('open',chartVisible);
   if(chartVisible) drawChart();
 }
@@ -688,8 +637,8 @@ function drawChart(){
   const srcData=ALL_SALES[activeNendo]||[];
   const nendo=parseInt(activeNendo);
   const monthOrder=[];
-  for(let m=2;m<=12;m++) monthOrder.push({label:m+'月',key:nendo+'年'+m+'月'});
-  monthOrder.push({label:'1月',key:(nendo+1)+'年1月'});
+  for(let m=2;m<=12;m++) monthOrder.push({label:m+'月 ',key:nendo+'年 '+m+'月 '});
+  monthOrder.push({label:'1月 ',key:(nendo+1)+'年1月 '});
   const labels=[],actuals=[],unitPrices=[];
   monthOrder.forEach(mo=>{
     const md=srcData.filter(r=>r.month===mo.key);
@@ -719,7 +668,7 @@ function drawChart(){
     ctx.strokeStyle='rgba(48,54,61,0.8)'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cW,y); ctx.stroke();
     ctx.fillStyle='#8b949e'; ctx.font='10px sans-serif'; ctx.textAlign='right';
-    ctx.fillText('¥'+(maxA*i/4/10000).toFixed(0)+'万',pad.left-4,y+4);
+    ctx.fillText('¥'+(maxA*i/4/10000).toFixed(0)+'万 ',pad.left-4,y+4);
   }
   // 棒グラフ 
   actuals.forEach((v,i)=>{
@@ -756,9 +705,9 @@ function drawChart(){
   const lx=pad.left, ly=H-2;
   ctx.fillStyle='rgba(232,168,76,0.85)'; ctx.fillRect(lx,ly-8,12,8);
   ctx.fillStyle='#8b949e'; ctx.textAlign='left'; ctx.font='10px sans-serif';
-  ctx.fillText('売上実績',lx+14,ly);
+  ctx.fillText('売上実績 ',lx+14,ly);
   ctx.fillStyle='#3fb950'; ctx.fillRect(lx+75,ly-5,14,2);
-  ctx.fillStyle='#8b949e'; ctx.fillText('月別単価',lx+91,ly);
+  ctx.fillStyle='#8b949e'; ctx.fillText('月別単価 ',lx+91,ly);
 }
 
 /* === 初期化  === */
