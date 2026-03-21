@@ -11,7 +11,6 @@
 // GASのiframeを全画面に強制スケールするハック
 (function(){
   try {
-    // 親フレームのiframeを取得して幅を100%に
     if(window.parent && window.parent !== window){
       var iframes = window.parent.document.querySelectorAll('iframe');
       iframes.forEach(function(f){
@@ -22,11 +21,9 @@
       });
     }
   } catch(e){}
-  // document全体にズームリセット
   document.addEventListener('DOMContentLoaded', function(){
     document.documentElement.style.zoom = '1';
     document.body.style.zoom = '1';
-    // iOSのscale強制リセット
     var meta = document.querySelector('meta[name=viewport]');
     if(meta){
       meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no';
@@ -124,26 +121,6 @@
   .chart-toggle-btn.open { border-color:var(--accent); color:var(--accent); }
     @keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
   @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-  /* === コース変更モーダル === */
-  .cc-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; align-items:flex-end; justify-content:center; }
-  .cc-overlay.open { display:flex; }
-  .cc-sheet { background:var(--bg); border-radius:20px 20px 0 0; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; padding:20px 16px 40px; animation:fadeUp .25s; }
-  .cc-title { font-size:16px; font-weight:700; margin-bottom:4px; }
-  .cc-sub { font-size:12px; color:var(--text-muted); margin-bottom:16px; }
-  .cc-tabs { display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:12px; padding-bottom:4px; scrollbar-width:none; }
-  .cc-tabs::-webkit-scrollbar { display:none; }
-  .cc-tab { background:var(--surface); border:1px solid var(--border); border-radius:20px; color:var(--text-muted); padding:6px 14px; font-size:12px; cursor:pointer; white-space:nowrap; font-family:inherit; transition:all .15s; }
-  .cc-tab.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:700; }
-  .cc-grid { display:grid; grid-template-columns:1fr; gap:8px; margin-bottom:14px; }
-  @media(min-width:400px){ .cc-grid { grid-template-columns:1fr 1fr; } }
-  .cc-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; transition:all .15s; }
-  .cc-item.selected { border-color:var(--accent); background:rgba(232,168,76,.1); }
-  .cc-item .ci-check { width:20px; height:20px; border-radius:4px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
-  .cc-item.selected .ci-check { background:var(--accent); border-color:var(--accent); color:#000; }
-  .cc-total { font-size:20px; font-weight:700; text-align:center; margin:12px 0; color:var(--accent); }
-  .cc-btns { display:flex; gap:10px; margin-top:16px; }
-  .cc-save { flex:1; background:var(--accent); border:none; border-radius:10px; color:#000; font-size:15px; font-weight:700; padding:14px; cursor:pointer; font-family:inherit; min-height:48px; }
-  .cc-cancel { background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text-muted); font-size:15px; padding:14px 20px; cursor:pointer; font-family:inherit; min-height:48px; }
 </style>
 </head>
 <body>
@@ -189,41 +166,18 @@
       <div class="field"><label>学校名</label>
         <select id="school">
           <option value="">選択（任意）</option>
-          <option>稲枝東小学校</option>
-          <option>稲枝西小学校</option>
-          <option>稲枝北小学校</option>
-          <option>城北小学校</option>
-          <option>佐和山小学校</option>
-          <option>金城小学校</option>
-          <option>平田小学校</option>
-          <option>旭森小学校</option>
-          <option>城陽小学校</option>
-          <option>鳥居本小学校</option>
-          <option>亀山小学校</option>
-          <option>多賀小学校</option>
-          <option>東中学校</option>
-          <option>西中学校</option>
-          <option>南中学校</option>
-          <option>北中学校</option>
-          <option>稲枝中学校</option>
-          <option>彦根中学校</option>
-          <option>鳥居本中学校</option>
-          <option>彦根幼稚園</option>
-          <option>高宮幼稚園</option>
-          <option>稲枝東幼稚園</option>
-          <option>旭森幼稚園</option>
-          <option>城北幼稚園</option>
-          <option>平田こども園</option>
-          <option>みどりこども園</option>
-          <option>彦根保育園</option>
-          <option>高宮保育園</option>
-          <option>愛知保育園</option>
-          <option>ひかり第二保育園</option>
-          <option>愛荘町立愛知小学校</option>
-          <option>愛荘町立愛知中学校</option>
-          <option>愛荘町立愛知幼稚園</option>
-          <option>愛荘町立愛知保育園</option>
-          <option>その他</option>
+          <option>稲枝東小学校</option><option>稲枝西小学校</option><option>稲枝北小学校</option>
+          <option>城北小学校</option><option>佐和山小学校</option><option>金城小学校</option>
+          <option>平田小学校</option><option>旭森小学校</option><option>城陽小学校</option>
+          <option>鳥居本小学校</option><option>亀山小学校</option><option>多賀小学校</option>
+          <option>東中学校</option><option>西中学校</option><option>南中学校</option>
+          <option>北中学校</option><option>稲枝中学校</option><option>彦根中学校</option>
+          <option>鳥居本中学校</option><option>彦根幼稚園</option><option>高宮幼稚園</option>
+          <option>稲枝東幼稚園</option><option>旭森幼稚園</option><option>城北幼稚園</option>
+          <option>平田こども園</option><option>みどりこども園</option><option>彦根保育園</option>
+          <option>高宮保育園</option><option>愛知保育園</option><option>ひかり第二保育園</option>
+          <option>愛荘町立愛知小学校</option><option>愛荘町立愛知中学校</option>
+          <option>愛荘町立愛知幼稚園</option><option>愛荘町立愛知保育園</option><option>その他</option>
         </select>
       </div>
     </div>
@@ -262,7 +216,6 @@ let salesLoaded = false;
 let salesLoading = false;
 
 function loadSalesData(callback) {
-  // リアルタイム取得：キャッシュなし
   if (salesLoading) { setTimeout(() => loadSalesData(callback), 300); return; }
   salesLoading = true;
   const loadingEl = document.getElementById('salesLoading');
@@ -276,23 +229,20 @@ function loadSalesData(callback) {
     if (res.status === 'ok') {
       ALL_SALES = res.sales || {};
       salesLoaded = true;
-      buildNendoButtons(); // 取得したデータに基づいて年度ボタンを再生成
-    } else {
-      console.error('売上データ取得エラー:', res.message);
+      buildNendoButtons(); 
     }
     salesLoading = false;
     if (loadingEl) loadingEl.style.display = 'none';
     callback && callback();
   })
   .catch(err => {
-    console.error('売上データ通信エラー:', err);
     salesLoading = false;
     if (loadingEl) loadingEl.style.display = 'none';
     callback && callback();
   });
 }
 
-/* === 日付・年度（2月スタート〜1月終わり） === */
+/* === 日付・年度 === */
 const NOW = new Date();
 const CUR_YEAR = NOW.getFullYear();
 const CUR_MONTH = NOW.getMonth() + 1;
@@ -344,6 +294,7 @@ function buildMonthButtons(){
   document.getElementById('salesTitle').textContent=activeNendo+'年度 月別売上照会';
   document.getElementById('nendoLabel').innerHTML='表示期間：<span>'+nendo+'年2月 〜 '+(nendo+1)+'年1月</span>　現在：<span>'+CUR_YEAR+'年'+CUR_MONTH+'月</span>';
 }
+
 /* === コースマスタ === */
 const COURSES = [
   {id:'c1',区分:'ブリッジ(塾)',name:'ブリッジ 小学生 通い放題',grade:'小学生',price:17000},
@@ -391,7 +342,7 @@ function renderTags(){
 }
 function updateTotal(){ const t=COURSES.filter(c=>selected.has(c.id)).reduce((s,c)=>s+c.price,0); document.getElementById('totalAmt').innerHTML='¥'+t.toLocaleString()+'<span>/ 月</span>'; }
 
-// ★ここにGASのウェブアプリURLを貼り付けてください★（※URLが変わっていない場合はこのままでOKです）
+// ★設定済みのGAS URL★
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
 
 function submitData(){
@@ -429,7 +380,6 @@ function switchTab(t){
 
 
 let activeMonth='';
-
 function setMonth(m){ activeMonth=m; document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.m===m)); renderSales(); }
 
 function renderSales(){
@@ -470,6 +420,14 @@ function loadStudents() {
   .then(res => {
     if (res.status === 'ok') {
       studentsCache = res.students;
+      
+      // ★今回の超重要修正ポイント：退会日が入っている生徒を「強制的に退会扱い」に上書きするフィルター
+      studentsCache.forEach(s => {
+        if (s.withdrawDate && s.withdrawDate !== '') {
+          s.isActive = false; // これで古いデータ列の情報を上書きします
+        }
+      });
+
       status.style.display = 'none';
       renderManage();
     } else {
@@ -619,7 +577,6 @@ function drawChart(){
   const maxA=Math.max(...actuals)*1.15||1;
   const maxP=Math.max(...unitPrices)*1.15||1;
   const gap=cW/n, barW=gap*0.55;
-  // グリッド
   for(let i=0;i<=4;i++){
     const y=pad.top+cH*(1-i/4);
     ctx.strokeStyle='rgba(48,54,61,0.8)'; ctx.lineWidth=1;
@@ -627,7 +584,6 @@ function drawChart(){
     ctx.fillStyle='#8b949e'; ctx.font='10px sans-serif'; ctx.textAlign='right';
     ctx.fillText('¥'+(maxA*i/4/10000).toFixed(0)+'万',pad.left-4,y+4);
   }
-  // 棒グラフ
   actuals.forEach((v,i)=>{
     const x=pad.left+gap*i+gap/2-barW/2;
     const bH=(v/maxA)*cH, y=pad.top+cH-bH;
@@ -638,7 +594,6 @@ function drawChart(){
     if(ctx.roundRect) ctx.roundRect(x,y,barW,bH,3); else ctx.rect(x,y,barW,bH);
     ctx.fill();
   });
-  // 折れ線
   ctx.strokeStyle='#3fb950'; ctx.lineWidth=2; ctx.beginPath();
   unitPrices.forEach((v,i)=>{
     const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP);
@@ -649,16 +604,13 @@ function drawChart(){
     const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP);
     ctx.fillStyle='#3fb950'; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
   });
-  // X軸ラベル
   ctx.fillStyle='#8b949e'; ctx.font='11px sans-serif'; ctx.textAlign='center';
   labels.forEach((l,i)=>{ ctx.fillText(l,pad.left+gap*i+gap/2,H-6); });
-  // 右軸（単価）
   ctx.fillStyle='#3fb950'; ctx.font='10px sans-serif'; ctx.textAlign='left';
   for(let i=0;i<=4;i++){
     const y=pad.top+cH*(1-i/4);
     ctx.fillText('¥'+(maxP*i/4/1000).toFixed(0)+'k',W-pad.right+4,y+4);
   }
-  // 凡例
   const lx=pad.left, ly=H-2;
   ctx.fillStyle='rgba(232,168,76,0.85)'; ctx.fillRect(lx,ly-8,12,8);
   ctx.fillStyle='#8b949e'; ctx.textAlign='left'; ctx.font='10px sans-serif';
@@ -672,7 +624,6 @@ renderCtabs(); renderGrid();
 document.getElementById('startDate').value=new Date().toISOString().split('T')[0];
 buildNendoButtons();
 buildMonthButtons();
-// 売上データはGASから非同期取得（初期表示時は売上タブを開いたときに自動ロード）
 if(IS_NEW_NENDO) document.getElementById('gradeBanner').classList.add('show');
 </script>
 </body>
