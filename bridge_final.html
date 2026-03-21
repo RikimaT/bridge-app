@@ -254,8 +254,8 @@ function renderCgrid(gridId,list,mode){
     var s=sel.some(function(x){return x.courseID===c.courseID;});
     var nm=c.courseName||c.displayName||c.courseID;
     h+='<div class="citem'+(s?' sel':'')+'" data-id="'+c.courseID+'" onclick="toggleC(\''+c.courseID+'\',\''+mode+'\')">';
-    h+='<div><div class="cname">'+nm+'</div><div class="cprice">'+(c.price?'&#165;'+Number(c.price).toLocaleString():'--')+'</div></div>';
-    h+='<div class="ccheck">'+(s?'&#10003;':'')+'</div></div>';
+    h+='<div><div class="cname">'+nm+'</div><div class="cprice">'+(c.price?'¥'+Number(c.price).toLocaleString():'--')+'</div></div>';
+    h+='<div class="ccheck">'+(s?'✓':'')+'</div></div>';
   });
   document.getElementById(gridId).innerHTML=h;
 }
@@ -269,14 +269,14 @@ function toggleC(courseID,mode){
   if(idx>=0)arr.splice(idx,1);else arr.push(course);
   var gid=mode==='reg'?'reg-cgrid':'add-cgrid';
   document.querySelectorAll('#'+gid+' .citem').forEach(function(el){
-    if(el.dataset.id===courseID){var s=arr.some(function(x){return x.courseID===courseID;});el.classList.toggle('sel',s);el.querySelector('.ccheck').innerHTML=s?'&#10003;':'';}
+    if(el.dataset.id===courseID){var s=arr.some(function(x){return x.courseID===courseID;});el.classList.toggle('sel',s);el.querySelector('.ccheck').innerHTML=s?'✓':'';}
   });
   if(mode==='reg'){renderRegTags();updateRegTotal();}else renderAddTags();
 }
 
 function renderRegTags(){
   document.getElementById('reg-stags').innerHTML=regSel.map(function(s){
-    return '<span class="stag">'+(s.courseName||s.courseID)+'<button onclick="toggleC(\''+s.courseID+'\',\'reg\')">&#215;</button></span>';
+    return '<span class="stag">'+(s.courseName||s.courseID)+'<button onclick="toggleC(\''+s.courseID+'\',\'reg\')">×</button></span>';
   }).join('');
 }
 function updateRegTotal(){
@@ -338,7 +338,7 @@ function renderMgr(){
         var ov=e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:5px;">上書</span>':'';
         cr+='<div class="enroll-row"><div style="flex:1;min-width:0;"><div class="er-course">'+(e.courseName||e.courseID)+'</div>';
         cr+='<div class="er-meta">開始: '+(e.startDate||'--')+ov+'</div></div>';
-        cr+='<div style="display:flex;align-items:center;gap:6px;"><span class="er-price">&#165;'+price.toLocaleString()+'</span>';
+        cr+='<div style="display:flex;align-items:center;gap:6px;"><span class="er-price">¥'+price.toLocaleString()+'</span>';
         cr+='<button class="btn btn-ghost btn-sm" data-eid="'+e.enrollID+'" data-cn="'+(e.courseName||'').replace(/"/g,'&quot;')+'" data-p="'+price+'" data-sid="'+s.studentID+'" onclick="editPriceBtn(this)">変更</button>';
         cr+='<button class="btn btn-danger btn-sm" data-eid="'+e.enrollID+'" data-sid="'+s.studentID+'" data-cn="'+(e.courseName||'').replace(/"/g,'&quot;')+'" onclick="endEnrollBtn(this)">終了</button>';
         cr+='</div></div>';
@@ -350,7 +350,7 @@ function renderMgr(){
     h+='<div class="sinfo">'+(s.grade||'--')+(s.school?' / '+s.school:'')+'</div>';
     h+='<div style="margin-top:6px;">'+(clist||'<span style="font-size:12px;color:var(--muted);">コースなし</span>')+'</div></div>';
     h+='<div style="text-align:right;flex-shrink:0;"><span class="badge badge-ok">在籍</span><br>';
-    h+='<span class="stotal" style="margin-top:6px;display:block;">&#165;'+total.toLocaleString()+'/月</span></div></div>';
+    h+='<span class="stotal" style="margin-top:6px;display:block;">¥'+total.toLocaleString()+'/月</span></div></div>';
     h+='<div class="scard-detail" id="sd-'+s.studentID+'">'+cr;
     h+='<div class="action-row">';
     h+='<button class="btn btn-ghost" style="flex:1;" data-sid="'+s.studentID+'" data-name="'+s.name.replace(/"/g,'&quot;')+'" onclick="openAddModalBtn(this)">+ コース追加</button>';
@@ -519,10 +519,10 @@ function renderChart(){
       responsive:true,
       plugins:{
         legend:{display:true,labels:{color:'#8b949e',font:{size:11}}},
-        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': &#165;'+ctx.raw.toLocaleString();}}}
+        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': ¥'+ctx.raw.toLocaleString();}}}
       },
       scales:{
-        y:{ticks:{color:'#8b949e',callback:function(v){return v>=10000?(v/10000).toFixed(0)+'万':'&#165;'+v;}},grid:{color:'rgba(48,54,61,0.6)'},border:{display:false}},
+        y:{ticks:{color:'#8b949e',callback:function(v){return v>=10000?(v/10000).toFixed(0)+'万':'¥'+v;}},grid:{color:'rgba(48,54,61,0.6)'},border:{display:false}},
         x:{ticks:{color:'#8b949e'},grid:{display:false}}
       }
     }
@@ -546,20 +546,20 @@ function renderSalesDetail(){
   // Sales_Historyの実績があれば上部に大きく表示
   if(salesData&&salesData.total>0){
     h+='<div class="sum-grid">';
-    h+='<div class="sum-card"><div class="sum-label">請求合計（実績）</div><div class="sum-val">&#165;'+salesData.total.toLocaleString()+'</div></div>';
-    h+='<div class="sum-card"><div class="sum-label">入金合計</div><div class="sum-val" style="color:var(--ok)">&#165;'+(salesData.actual||0).toLocaleString()+'</div></div>';
+    h+='<div class="sum-card"><div class="sum-label">請求合計（実績）</div><div class="sum-val">¥'+salesData.total.toLocaleString()+'</div></div>';
+    h+='<div class="sum-card"><div class="sum-label">入金合計</div><div class="sum-val" style="color:var(--ok)">¥'+(salesData.actual||0).toLocaleString()+'</div></div>';
     h+='</div>';
     // 未収額
     var uncollected=salesData.total-(salesData.actual||0);
     if(uncollected>0){
       h+='<div style="background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);border-radius:10px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">';
       h+='<span style="font-size:13px;color:var(--muted);">未収額</span>';
-      h+='<span style="font-size:16px;font-weight:700;color:var(--ng);">&#165;'+uncollected.toLocaleString()+'</span></div>';
+      h+='<span style="font-size:16px;font-weight:700;color:var(--ng);">¥'+uncollected.toLocaleString()+'</span></div>';
     }
   } else {
     // データなし or 未来月は在籍ベースで表示
     h+='<div class="sum-grid">';
-    h+='<div class="sum-card"><div class="sum-label">'+(isFuture?'見込み月額':'在籍月額合計')+'</div><div class="sum-val">&#165;'+enrollTotal.toLocaleString()+'</div></div>';
+    h+='<div class="sum-card"><div class="sum-label">'+(isFuture?'見込み月額':'在籍月額合計')+'</div><div class="sum-val">¥'+enrollTotal.toLocaleString()+'</div></div>';
     h+='<div class="sum-card"><div class="sum-label">在籍生徒数</div><div class="sum-val">'+uids.length+'名</div></div>';
     h+='</div>';
     if(isFuture) h+='<div style="background:rgba(232,168,76,.08);border:1px solid rgba(232,168,76,.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--accent2);">この月はまだ実績データがありません。現在の在籍月額を表示しています。</div>';
@@ -580,9 +580,9 @@ function renderSalesDetail(){
         h+='<tr>';
         if(i===0)h+='<td rowspan="'+s.courses.length+'" style="font-weight:700;vertical-align:top;">'+s.name+'</td>';
         h+='<td>'+(e.courseName||e.courseID)+(e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:4px;">上書</span>':'')+'</td>';
-        h+='<td class="td-r">&#165;'+price.toLocaleString()+'</td></tr>';
+        h+='<td class="td-r">¥'+price.toLocaleString()+'</td></tr>';
       });
-      if(s.courses.length>1)h+='<tr><td></td><td style="font-size:11px;color:var(--muted);">-- 小計</td><td class="td-r" style="color:var(--accent2);">&#165;'+sub.toLocaleString()+'</td></tr>';
+      if(s.courses.length>1)h+='<tr><td></td><td style="font-size:11px;color:var(--muted);">-- 小計</td><td class="td-r" style="color:var(--accent2);">¥'+sub.toLocaleString()+'</td></tr>';
     });
     h+='</tbody></table>';
   }else{h+='<div class="empty">在籍データなし</div>';}
