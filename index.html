@@ -133,7 +133,7 @@
         <option value="inactive">退会済み</option>
       </select>
     </div>
-    <div id="manageStatus" style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px">読み込み中...</div>
+    <div id="manageStatus" style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px">システム起動中...</div>
     <div class="student-list" id="manageList"></div>
   </div>
   <div class="tab-pane active" id="tab-register">
@@ -249,36 +249,75 @@ function updateTotal(){ const t=COURSES.filter(c=>selected.has(c.id)).reduce((s,
 // ★設定済みのGAS URL★
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
 
-let ALL_SALES = {};
-let salesLoaded = false;
-let salesLoading = false;
+// ★超重要：過去の完全な売上RAWデータをアプリに直接埋め込み（過去データの復元）★
+const PAST_RAW = [{"month":"1月","name":"淺田　佳夢","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"ｱﾙﾓﾝﾃ　ﾛｱﾝ　ﾚｲﾗ","course":"算数","price":11800,"note":"","actual":11800},{"month":"1月","name":"天野瑞凰","course":"国語","price":33000,"note":"90分","actual":33000},{"month":"1月","name":"有田凜音","course":"塾","price":47000,"note":"通い放題","actual":60000},{"month":"1月","name":"有田芽唯","course":"国語","price":14200,"note":"","actual":null},{"month":"1月","name":"有田芽唯","course":"そろばん","price":4800,"note":"","actual":null},{"month":"1月","name":"有田芽唯","course":"算数","price":11800,"note":"","actual":null},{"month":"1月","name":"有田斗真","course":"国語","price":14200,"note":"","actual":null},{"month":"1月","name":"有田斗真","course":"そろばん","price":4800,"note":"","actual":null},{"month":"1月","name":"有田斗真","course":"算数","price":11800,"note":"","actual":null},{"month":"1月","name":"一居柚稀","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"1月","name":"猪田　結月","course":"そろばん","price":2400,"note":"","actual":2400},{"month":"1月","name":"井本　そうま","course":"自習室","price":3300,"note":"","actual":3300},{"month":"1月","name":"岩田　そうま","course":"自習室","price":8800,"note":"","actual":8800},{"month":"1月","name":"伊藤優月","course":"塾","price":9500,"note":"週２","actual":9500},{"month":"1月","name":"岩城勇翔","course":"塾","price":24000,"note":"9月から週２","actual":24000},{"month":"1月","name":"岩橋湊叶","course":"塾","price":24000,"note":"9月から週２","actual":24000},{"month":"1月","name":"上田仁斗","course":"塾","price":47000,"note":"12月から通放題","actual":47000},{"month":"1月","name":"上田悠人","course":"塾","price":47000,"note":"通い放題","actual":47000},{"month":"1月","name":"上村心咲","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"1月","name":"大西彩晴","course":"塾","price":11000,"note":"","actual":11000},{"month":"1月","name":"岡本空大","course":"そろばん","price":4800,"note":"","actual":9600},{"month":"1月","name":"岡本蒼司","course":"そろばん","price":4800,"note":"","actual":null},{"month":"1月","name":"小川真稀乃","course":"そろばん","price":7000,"note":"","actual":33000},{"month":"1月","name":"小川美岬","course":"数・国","price":26000,"note":"","actual":null},{"month":"1月","name":"奥野将","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"尾﨑美南","course":"塾","price":35500,"note":"週３","actual":35500},{"month":"1月","name":"尾﨑美南","course":"テスト講習","price":5500,"note":"","actual":null},{"month":"1月","name":"小澤優空","course":"塾","price":35500,"note":"9月から週３","actual":35500},{"month":"1月","name":"川嵜咲","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"久保田逸正","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"久保田琢満","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"小菅晴愛","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"小谷夏輝","course":"塾","price":47000,"note":"","actual":47000},{"month":"1月","name":"小谷聡輝","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"権藤杏","course":"そろばん","price":4800,"note":"","actual":12450},{"month":"1月","name":"権藤杏","course":"算数","price":11800,"note":"","actual":null},{"month":"1月","name":"椎　有彩","course":"算数","price":11800,"note":"","actual":11800},{"month":"1月","name":"椎　あいり","course":"塾","price":14000,"note":"週２","actual":14000},{"month":"1月","name":"四方翔紀","course":"塾","price":24000,"note":"9月から週２","actual":24000},{"month":"1月","name":"清水　春音","course":"算数","price":11800,"note":"","actual":11800},{"month":"1月","name":"髙田湖乃葉","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"1月","name":"田中蒼空","course":"塾","price":35500,"note":"通い放題","actual":47000},{"month":"1月","name":"田中　遼磨","course":"自習室","price":3300,"note":"","actual":3300},{"month":"1月","name":"中村明煌","course":"塾","price":35500,"note":"9月から週３","actual":35500},{"month":"1月","name":"中村明煌","course":"冬季講習代","price":3300,"note":"","actual":null},{"month":"1月","name":"中谷晄","course":"塾","price":47000,"note":"9月から通放題","actual":47000},{"month":"1月","name":"長谷川栞太","course":"そろばん","price":4800,"note":"","actual":7200},{"month":"1月","name":"長谷川葵介","course":"そろばん","price":4800,"note":"","actual":null},{"month":"1月","name":"原川かりな","course":"塾","price":14000,"note":"9月から週２","actual":14000},{"month":"1月","name":"秀島汐奈","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"秀島汐奈","course":"算数","price":11800,"note":"","actual":8850},{"month":"1月","name":"藤野葵","course":"塾","price":47000,"note":"通い放題","actual":60000},{"month":"1月","name":"藤野みのり","course":"塾","price":27000,"note":"通い放題","actual":null},{"month":"1月","name":"藤野みのり","course":"家族割","price":-14000,"note":"","actual":null},{"month":"1月","name":"本庄和結","course":"そろばん","price":4800,"note":"","actual":7200},{"month":"1月","name":"本庄梨花","course":"そろばん","price":4800,"note":"","actual":null},{"month":"1月","name":"水野結希","course":"算数","price":11800,"note":"","actual":17700},{"month":"1月","name":"水野稜希","course":"算数","price":11800,"note":"","actual":null},{"month":"1月","name":"峰愛依","course":"そろばん","price":4800,"note":"","actual":7200},{"month":"1月","name":"峰一陽","course":"そろばん","price":4800,"note":"","actual":null},{"month":"1月","name":"宮川來駕","course":"塾","price":3000,"note":"","actual":null},{"month":"1月","name":"三輪桜子","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"村田結莉","course":"算数","price":11800,"note":"","actual":26000},{"month":"1月","name":"村田結莉","course":"国語","price":14200,"note":"","actual":null},{"month":"1月","name":"村田龍一","course":"塾","price":27000,"note":"9月から放題","actual":17000},{"month":"1月","name":"村田愛莉","course":"塾","price":17000,"note":"通い放題","actual":17000},{"month":"1月","name":"村田愛莉","course":"家族割","price":-10000,"note":"","actual":null},{"month":"1月","name":"望月慎之助","course":"そろばん","price":4800,"note":"","actual":16600},{"month":"1月","name":"望月慎之助","course":"算数","price":11800,"note":"","actual":null},{"month":"1月","name":"本渕千裕","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"1月","name":"安居莉乃","course":"そろばん","price":7000,"note":"","actual":13650},{"month":"1月","name":"安居莉乃","course":"算数","price":11800,"note":"","actual":null},{"month":"1月","name":"山上龍","course":"そろばん","price":7000,"note":"","actual":12250},{"month":"1月","name":"山上陽","course":"そろばん","price":7000,"note":"","actual":null},{"month":"1月","name":"安居花道","course":"塾","price":47000,"note":"","actual":47000},{"month":"1月","name":"吉田星菜","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"1月","name":"吉田結翔","course":"そろばん","price":2400,"note":"","actual":4800},{"month":"1月","name":"吉田悠真","course":"そろばん","price":2400,"note":"","actual":null},{"month":"2月","name":"淺田　佳夢","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"ｱﾙﾓﾝﾃ　ﾛｱﾝ　ﾚｲﾗ","course":"算数","price":11800,"note":"","actual":8850},{"month":"2月","name":"天野瑞凰","course":"国語","price":33000,"note":"90分","actual":33000},{"month":"2月","name":"有田凜音","course":"塾","price":47000,"note":"通い放題","actual":60000},{"month":"2月","name":"有田芽唯","course":"国語","price":14200,"note":"","actual":null},{"month":"2月","name":"有田芽唯","course":"そろばん","price":4800,"note":"","actual":null},{"month":"2月","name":"有田芽唯","course":"算数","price":11800,"note":"","actual":null},{"month":"2月","name":"有田斗真","course":"国語","price":14200,"note":"","actual":null},{"month":"2月","name":"有田斗真","course":"そろばん","price":4800,"note":"","actual":null},{"month":"2月","name":"有田斗真","course":"算数","price":11800,"note":"","actual":null},{"month":"2月","name":"一居柚稀","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"猪田　結月","course":"そろばん","price":2400,"note":"","actual":2400},{"month":"2月","name":"井本　そうま","course":"自習室","price":3300,"note":"","actual":3300},{"month":"2月","name":"岩田　そうま","course":"自習室","price":8800,"note":"","actual":8800},{"month":"2月","name":"伊藤優月","course":"塾","price":9500,"note":"週２","actual":9500},{"month":"2月","name":"岩城勇翔","course":"塾","price":24000,"note":"9月から週２","actual":24000},{"month":"2月","name":"岩橋湊叶","course":"塾","price":24000,"note":"9月から週２","actual":24000},{"month":"2月","name":"上田仁斗","course":"塾","price":47000,"note":"12月から通放題","actual":47000},{"month":"2月","name":"上田悠人","course":"塾","price":47000,"note":"通い放題","actual":47000},{"month":"2月","name":"上村心咲","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"大西彩晴","course":"塾（講習）","price":11000,"note":"","actual":0},{"month":"2月","name":"岡本空大","course":"そろばん","price":4800,"note":"","actual":7200},{"month":"2月","name":"岡本蒼司","course":"そろばん","price":4800,"note":"","actual":null},{"month":"2月","name":"小川真稀乃","course":"そろばん","price":7000,"note":"","actual":33000},{"month":"2月","name":"小川美岬","course":"数・国","price":26000,"note":"","actual":null},{"month":"2月","name":"奥野将","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"尾﨑美南","course":"塾","price":35500,"note":"週３","actual":35500},{"month":"2月","name":"尾﨑美南","course":"テスト講習","price":5500,"note":"","actual":null},{"month":"2月","name":"小澤優空","course":"塾","price":35500,"note":"9月から週３","actual":35500},{"month":"2月","name":"川嵜咲","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"久保田逸正","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"2月","name":"久保田琢満","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"2月","name":"小菅晴愛","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"小谷夏輝","course":"塾","price":47000,"note":"","actual":47000},{"month":"2月","name":"小谷聡輝","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"権藤杏","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"椎　有彩","course":"算数","price":11800,"note":"","actual":11800},{"month":"2月","name":"椎　あいり","course":"塾","price":14000,"note":"週２","actual":14000},{"month":"2月","name":"四方翔紀","course":"塾","price":24000,"note":"9月から週２","actual":24000},{"month":"2月","name":"清水　春音","course":"算数","price":11800,"note":"","actual":11800},{"month":"2月","name":"髙田湖乃葉","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"田中蒼空","course":"塾","price":47000,"note":"週3+冬休み講習","actual":47000},{"month":"2月","name":"田中　遼磨","course":"自習室","price":3300,"note":"","actual":3300},{"month":"2月","name":"中村明煌","course":"塾","price":35500,"note":"9月から週３","actual":35500},{"month":"2月","name":"中村明煌","course":"冬季講習代","price":3300,"note":"","actual":0},{"month":"2月","name":"中谷晄","course":"塾","price":47000,"note":"9月から通放題","actual":47000},{"month":"2月","name":"長谷川栞太","course":"そろばん","price":4800,"note":"","actual":9600},{"month":"2月","name":"長谷川葵介","course":"そろばん","price":4800,"note":"","actual":null},{"month":"2月","name":"原川かりな","course":"塾","price":14000,"note":"9月から週２","actual":null},{"month":"2月","name":"秀島汐奈","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"2月","name":"秀島汐奈","course":"算数","price":11800,"note":"","actual":8850},{"month":"2月","name":"藤野葵","course":"塾","price":47000,"note":"通い放題","actual":60000},{"month":"2月","name":"藤野みのり","course":"塾","price":27000,"note":"通い放題","actual":null},{"month":"2月","name":"藤野みのり","course":"家族割","price":-14000,"note":"","actual":null},{"month":"2月","name":"本庄和結","course":"そろばん","price":4800,"note":"","actual":7200},{"month":"2月","name":"本庄梨花","course":"そろばん","price":4800,"note":"","actual":null},{"month":"2月","name":"水野結希","course":"算数","price":11800,"note":"","actual":17700},{"month":"2月","name":"水野稜希","course":"算数","price":11800,"note":"","actual":null},{"month":"2月","name":"峰愛依","course":"そろばん","price":4800,"note":"","actual":7200},{"month":"2月","name":"峰一陽","course":"そろばん","price":4800,"note":"","actual":null},{"month":"2月","name":"宮川來駕","course":"塾","price":3000,"note":"","actual":null},{"month":"2月","name":"三輪桜子","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"村田結莉","course":"算数","price":11800,"note":"","actual":0},{"month":"2月","name":"村田結莉","course":"国語","price":14200,"note":"","actual":null},{"month":"2月","name":"村田龍一","course":"塾","price":27000,"note":"9月から放題","actual":20500},{"month":"2月","name":"村田愛莉","course":"塾","price":17000,"note":"通い放題","actual":0},{"month":"2月","name":"村田愛莉","course":"家族割","price":-10000,"note":"","actual":null},{"month":"2月","name":"望月慎之助","course":"そろばん","price":4800,"note":"","actual":16600},{"month":"2月","name":"望月慎之助","course":"算数","price":11800,"note":"","actual":null},{"month":"2月","name":"本渕千裕","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"2月","name":"安居莉乃","course":"そろばん","price":7000,"note":"","actual":16600},{"month":"2月","name":"安居莉乃","course":"算数","price":11800,"note":"","actual":null},{"month":"2月","name":"山上龍","course":"そろばん","price":7000,"note":"","actual":12250},{"month":"2月","name":"山上陽","course":"そろばん","price":7000,"note":"","actual":null},{"month":"2月","name":"山上陽","course":"春期講習","price":11000,"note":"","actual":11000},{"month":"2月","name":"安居花道","course":"塾","price":47000,"note":"","actual":47000},{"month":"2月","name":"吉田星菜","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"2月","name":"吉田結翔","course":"そろばん","price":2400,"note":"","actual":4800},{"month":"2月","name":"吉田悠真","course":"そろばん","price":2400,"note":"","actual":null},{"month":"3月","name":"淺田　佳夢","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"3月","name":"ｱﾙﾓﾝﾃ　ﾛｱﾝ　ﾚｲﾗ","course":"算数","price":11800,"note":"","actual":11800},{"month":"3月","name":"天野瑞凰","course":"国語","price":33000,"note":"90分","actual":33000},{"month":"3月","name":"有田凜音","course":"塾","price":3300,"note":"","actual":60000},{"month":"3月","name":"有田芽唯","course":"国語","price":14200,"note":"","actual":null},{"month":"3月","name":"有田芽唯","course":"そろばん","price":4800,"note":"","actual":null},{"month":"3月","name":"有田芽唯","course":"算数","price":11800,"note":"","actual":null},{"month":"3月","name":"有田斗真","course":"国語","price":14200,"note":"","actual":null},{"month":"3月","name":"有田斗真","course":"そろばん","price":4800,"note":"","actual":null},{"month":"3月","name":"有田斗真","course":"算数","price":11800,"note":"","actual":null},{"month":"3月","name":"一居柚稀","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"猪田　結月","course":"そろばん","price":2400,"note":"","actual":2400},{"month":"3月","name":"井本　そうま","course":"自習室","price":3300,"note":"","actual":3300},{"month":"3月","name":"岩田　そうま","course":"自習室","price":8800,"note":"","actual":8800},{"month":"3月","name":"伊藤優月","course":"塾","price":9500,"note":"週２","actual":12000},{"month":"3月","name":"上田悠人","course":"塾","price":3300,"note":"","actual":3300},{"month":"3月","name":"上村心咲","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"大西彩晴","course":"塾（講習）","price":11000,"note":"","actual":0},{"month":"3月","name":"岡本空大","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"小川真稀乃","course":"そろばん","price":7000,"note":"","actual":33000},{"month":"3月","name":"小川美岬","course":"数・国","price":26000,"note":"","actual":null},{"month":"3月","name":"奥野将","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"3月","name":"川嵜咲","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"久保田逸正","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"久保田琢満","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"小菅晴愛","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"小谷夏輝","course":"塾","price":3300,"note":"","actual":3300},{"month":"3月","name":"小谷聡輝","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"権藤杏","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"椎　有彩","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"3月","name":"椎　あいり","course":"塾","price":19000,"note":"週２","actual":19000},{"month":"3月","name":"四方翔紀","course":"塾","price":24000,"note":"9月から週２","actual":null},{"month":"3月","name":"清水　春音","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"3月","name":"清水しずき","course":"そろばん","price":4800,"note":"","actual":0},{"month":"3月","name":"髙田湖乃葉","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"田中蒼空","course":"塾","price":3300,"note":"週3+冬休み講習","actual":3300},{"month":"3月","name":"田中　遼磨","course":"自習室","price":3300,"note":"","actual":3300},{"month":"3月","name":"中村明煌","course":"塾","price":3300,"note":"9月から週３","actual":3300},{"month":"3月","name":"長谷川栞太","course":"そろばん","price":4800,"note":"","actual":7200},{"month":"3月","name":"長谷川葵介","course":"そろばん","price":4800,"note":"","actual":null},{"month":"3月","name":"秀島汐奈","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"3月","name":"秀島汐奈","course":"算数","price":11800,"note":"","actual":8850},{"month":"3月","name":"藤野葵","course":"塾","price":3300,"note":"通い放題","actual":17700},{"month":"3月","name":"藤野みのり","course":"塾","price":28000,"note":"通い放題","actual":null},{"month":"3月","name":"本庄和結","course":"そろばん","price":4800,"note":"","actual":9600},{"month":"3月","name":"本庄梨花","course":"そろばん","price":4800,"note":"","actual":null},{"month":"3月","name":"水野結希","course":"算数","price":11800,"note":"","actual":23600},{"month":"3月","name":"水野稜希","course":"算数","price":11800,"note":"","actual":null},{"month":"3月","name":"峰一陽","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"三輪桜子","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"村田龍一","course":"塾","price":28000,"note":"週3","actual":28000},{"month":"3月","name":"望月慎之助","course":"そろばん","price":4800,"note":"","actual":16600},{"month":"3月","name":"望月慎之助","course":"算数","price":11800,"note":"","actual":null},{"month":"3月","name":"本渕千裕","course":"そろばん","price":4800,"note":"","actual":4800},{"month":"3月","name":"安居莉乃","course":"そろばん","price":4200,"note":"","actual":35050},{"month":"3月","name":"安居莉乃","course":"算数","price":8850,"note":"","actual":null},{"month":"3月","name":"安居莉乃","course":"国語","price":22000,"note":"","actual":null},{"month":"3月","name":"山上龍","course":"そろばん","price":7000,"note":"","actual":6125},{"month":"3月","name":"吉田星菜","course":"そろばん","price":4800,"note":"","actual":3600},{"month":"3月","name":"吉田結翔","course":"そろばん","price":2400,"note":"","actual":4800},{"month":"3月","name":"吉田悠真","course":"そろばん","price":2400,"note":"","actual":null}];
 
-function loadSalesData() {
-  if (salesLoading) return;
-  salesLoading = true;
-  document.getElementById('summaryRow').innerHTML = '<div style="grid-column: span 3;text-align:center;padding:20px;color:var(--text-muted);">スプレッドシートから最新データを読込中...</div>';
-  
-  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getSales' }) })
+let ALL_SALES = {};
+PAST_RAW.forEach(r => {
+  const m = parseInt(r.month.replace('月',''));
+  const y = 2026;
+  const nendo = "2025";
+  if (!ALL_SALES[nendo]) ALL_SALES[nendo] = [];
+  ALL_SALES[nendo].push({ month: y + "年" + m + "月", name: r.name, course: r.course, price: r.price, note: r.note, actual: r.actual });
+});
+
+let studentsCache = [];
+
+function loadStudents() {
+  const status = document.getElementById('manageStatus');
+  status.style.display = 'block';
+  status.textContent = '最新の生徒情報を取得中...';
+
+  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents' }) })
   .then(r => r.json())
   .then(res => {
     if (res.status === 'ok') {
-      ALL_SALES = res.sales || {};
-      salesLoaded = true;
-      buildNendoButtons(); 
+      studentsCache = res.students.map(s => {
+        let active = s.isActive;
+        if (s.withdrawDate && s.withdrawDate.trim() !== '') active = false;
+        return { ...s, isActuallyActive: active };
+      });
+      generateFutureSales(); // 未来6ヶ月分の予想を自動生成
+      status.style.display = 'none';
+      renderManage();
+      buildNendoButtons();
       buildMonthButtons();
       renderSales();
-    } else if (res.message && res.message.includes('不明なアクション')) {
-      alert("【超重要エラー！】GASのコードが古いままです！\n\nGAS画面右上の「デプロイ」→「デプロイを管理」→鉛筆マーク→「新バージョン」を選んで更新してください。これをやらないと最新データは取得できません！");
-      showToast('GASの更新（新バージョンでデプロイ）が必要です', true);
     } else {
-      showToast('売上読込エラー', true);
+      status.textContent = 'エラー：' + res.message;
     }
-    salesLoading = false;
   })
-  .catch(err => {
-    showToast('通信エラー', true);
-    salesLoading = false;
-  });
+  .catch(() => { status.textContent = '通信エラーが発生しました'; });
+}
+
+// ★未来6ヶ月分の予想売上を自動で生成する関数★
+function generateFutureSales() {
+  const curY = new Date().getFullYear();
+  const curM = new Date().getMonth() + 1;
+  for (let step = 1; step <= 6; step++) {
+    let ty = curY;
+    let tm = curM + step;
+    if (tm > 12) { tm -= 12; ty++; }
+    
+    // 過去データと被らないようにする
+    if (ty === 2026 && tm <= 3) continue;
+
+    let nendo = tm >= 2 ? String(ty) : String(ty - 1);
+    if (!ALL_SALES[nendo]) ALL_SALES[nendo] = [];
+    let monthStr = ty + '年' + tm + '月';
+
+    studentsCache.forEach(s => {
+      if (!s.isActuallyActive) return;
+      const enrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
+      if (enrolls.length === 0) {
+        ALL_SALES[nendo].push({ month: monthStr, name: s.name, course: '未設定', price: 0, note: '', actual: null });
+      } else {
+        enrolls.forEach(e => {
+          ALL_SALES[nendo].push({ month: monthStr, name: s.name, course: e.courseName, price: e.overrideAmount || 0, note: e.memo, actual: null });
+        });
+      }
+    });
+  }
 }
 
 function submitData(){
@@ -310,8 +349,8 @@ function switchTab(t){
   document.querySelectorAll('.main-tab').forEach((el,i)=>{ if(tabs[i]===t) el.classList.add('active'); });
   document.querySelectorAll('.tab-pane').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  if(t==='sales') loadSalesData();
-  if(t==='manage') loadStudents();
+  if(t==='sales') renderSales();
+  if(t==='manage') renderManage();
 }
 
 const NOW = new Date();
@@ -322,15 +361,14 @@ const IS_NEW_NENDO = CUR_MONTH >= 2;
 
 document.getElementById('headerSub').textContent = '生徒管理システム ' + CUR_NENDO + '年度';
 
-let activeNendo = String(CUR_NENDO);
-let AVAILABLE_NENDOS = [String(CUR_NENDO)];
+let activeNendo = "2025";
+let AVAILABLE_NENDOS = ["2025", "2026"];
 
 function buildNendoButtons(){
   const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
   const maxFutureNendo = (maxFuture.getMonth() + 1 >= 2) ? maxFuture.getFullYear() : maxFuture.getFullYear() - 1;
   const dataNendos = Object.keys(ALL_SALES).filter(n => parseInt(n) <= maxFutureNendo).sort();
   if (dataNendos.length > 0) AVAILABLE_NENDOS = dataNendos;
-  if(!AVAILABLE_NENDOS.includes(activeNendo) && AVAILABLE_NENDOS.length > 0) activeNendo = AVAILABLE_NENDOS[AVAILABLE_NENDOS.length - 1];
   document.getElementById('nendoBtns').innerHTML = AVAILABLE_NENDOS.map(n => '<button class="nbtn '+(n===activeNendo?'active':'')+'" onclick="setNendo(this.dataset.n)" data-n="'+n+'">'+n+'年度</button>').join('');
 }
 function setNendo(n){
@@ -338,7 +376,7 @@ function setNendo(n){
   if(chartVisible) drawChart(); renderSales();
 }
 
-let activeMonth='';
+let activeMonth='2026年3月';
 function buildMonthButtons(){
   const nendo = parseInt(activeNendo);
   const months = [];
@@ -353,8 +391,8 @@ function buildMonthButtons(){
 
   let curKey = months.find(m => m.key === activeMonth) ? activeMonth : '';
   if (!curKey) {
-    if (activeNendo === String(CUR_NENDO)) curKey = CUR_MONTH === 1 ? (CUR_NENDO + 1) + '年1月' : CUR_NENDO + '年' + CUR_MONTH + '月';
-    activeMonth = (months.find(m => m.key === curKey) || months[months.length - 1] || {}).key || '';
+    curKey = months[months.length - 1]?.key || '';
+    activeMonth = curKey;
   }
 
   document.getElementById('monthBtns').innerHTML = months.map(m => '<button class="mbtn '+(m.key===activeMonth?'active':'')+'" data-m="'+m.key+'" onclick="setMonth(this.dataset.m)">'+m.label+'</button>').join('');
@@ -384,45 +422,12 @@ function renderSales(){
 
 function showToast(msg,isError=false){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast'+(isError?' error':''); requestAnimationFrame(()=>t.classList.add('show')); setTimeout(()=>t.classList.remove('show'),3500); }
 
-/* === 生徒管理 === */
-let studentsCache = [];
-
-function loadStudents() {
-  const status = document.getElementById('manageStatus');
-  const list = document.getElementById('manageList');
-  status.style.display = 'block';
-  status.textContent = '読み込み中...';
-  list.innerHTML = '';
-
-  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents' }) })
-  .then(r => r.json())
-  .then(res => {
-    if (res.status === 'ok') {
-      studentsCache = res.students;
-      studentsCache.forEach(s => { if (s.withdrawDate && s.withdrawDate !== '') s.isActive = false; });
-      status.style.display = 'none';
-      renderManage();
-    } else if (res.message && res.message.includes('不明なアクション')) {
-      alert("【超重要エラー！】GASのコードが古いままです！\n\nGAS画面右上の「デプロイ」→「デプロイを管理」→鉛筆マーク→「新バージョン」を選んで更新してください。これをやらないと最新データは取得できません！");
-      status.textContent = 'GASのデプロイを更新してください';
-    } else {
-      status.textContent = 'エラー：' + res.message;
-    }
-  })
-  .catch(() => { status.textContent = '通信エラーが発生しました'; });
-}
-
 function renderManage() {
   const q = document.getElementById('manageSearch').value.trim().toLowerCase();
   const filterVal = document.getElementById('manageFilter').value;
   const list = document.getElementById('manageList');
 
-  let students = studentsCache.map(s => {
-    let active = s.isActive;
-    if (s.withdrawDate && s.withdrawDate.trim() !== '') active = false;
-    return { ...s, isActuallyActive: active };
-  });
-
+  let students = studentsCache;
   if (filterVal === 'active') students = students.filter(s => s.isActuallyActive === true);
   else if (filterVal === 'inactive') students = students.filter(s => s.isActuallyActive === false);
   if (q) students = students.filter(s => s.name.toLowerCase().includes(q));
@@ -433,26 +438,15 @@ function renderManage() {
   list.innerHTML = students.map(s => {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
-    
-    const enrollInfo = activeEnrolls.length > 0 
-      ? activeEnrolls.map(e => (e.courseName || e.memo || 'コース設定なし')).filter(Boolean).join('・') 
-      : '—';
-
-    const statusBadge = s.isActuallyActive
-      ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
-      : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
+    const enrollInfo = activeEnrolls.length > 0 ? activeEnrolls.map(e => (e.courseName + (e.memo ? ' ('+e.memo+')' : ''))).filter(Boolean).join('・') : '—';
+    const statusBadge = s.isActuallyActive ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>' : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
 
     const withdrawBtn = s.isActuallyActive ? `<button onclick="openWithdraw('${s.studentID}','${s.name}')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>` : '';
     const changeBtn = s.isActuallyActive && activeEnrolls.length > 0 ? `<button onclick="openChangeCourse('${s.studentID}','${s.name}',${JSON.stringify(activeEnrolls).replace(/'/g,"\'")})" style="background:rgba(232,168,76,.1);border:1px solid rgba(232,168,76,.3);border-radius:8px;color:var(--accent);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">コース変更</button>` : '';
 
     return `<div class="student-card">
-      <div class="sc-header">
-        <div style="min-width:0;flex:1">
-          <div class="sc-name">${s.name}${statusBadge}<span style="font-size:12px;color:var(--text-muted);margin-left:6px">${s.grade}</span></div>
-          <div class="sc-courses-preview" style="margin-top:4px">${enrollInfo}</div>
-        </div>
-        ${totalAmount > 0 ? `<div class="sc-total">¥${totalAmount.toLocaleString()}</div>` : ''}
-      </div>
+      <div class="sc-header"><div style="min-width:0;flex:1"><div class="sc-name">${s.name}${statusBadge}<span style="font-size:12px;color:var(--text-muted);margin-left:6px">${s.grade}</span></div>
+      <div class="sc-courses-preview" style="margin-top:4px">${enrollInfo}</div></div>${totalAmount > 0 ? `<div class="sc-total">¥${totalAmount.toLocaleString()}</div>` : ''}</div>
       ${s.isActuallyActive ? `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${withdrawBtn}${changeBtn}</div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">退会日：${s.withdrawDate || '—'}</div>`}
     </div>`;
   }).join('');
@@ -469,48 +463,32 @@ function openWithdraw(studentID, name) {
   fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'withdraw', studentID, withdrawDate: d }) })
   .then(r => r.json())
   .then(res => {
-    if (res.status === 'ok') {
-      showToast('✅ ' + name + 'さんを退会処理しました');
-      document.getElementById('manageFilter').value = 'active'; loadStudents();
-    } else {
-      showToast('エラー：' + res.message, true);
-      if(btn) { btn.disabled = false; btn.textContent = '退会処理'; }
-    }
-  })
-  .catch(() => { showToast('通信エラー', true); if(btn) { btn.disabled = false; btn.textContent = '退会処理'; } });
+    if (res.status === 'ok') { showToast('✅ ' + name + 'さんを退会処理しました'); document.getElementById('manageFilter').value = 'active'; loadStudents(); } 
+    else { showToast('エラー：' + res.message, true); if(btn) { btn.disabled = false; btn.textContent = '退会処理'; } }
+  }).catch(() => { showToast('通信エラー', true); if(btn) { btn.disabled = false; btn.textContent = '退会処理'; } });
 }
 
 function openChangeCourse(studentID, name, enrollments) {
   if (enrollments.length === 1) {
-    const e = enrollments[0];
-    const cur = e.overrideAmount || 0;
+    const e = enrollments[0]; const cur = e.overrideAmount || 0;
     const newAmt = prompt(`${name}さんのコース変更\n現在の上書き月額：¥${cur.toLocaleString()}\n\n新しい月額を入力してください（数字のみ）`, cur);
-    if (newAmt === null) return;
-    const amt = parseInt(newAmt);
+    if (newAmt === null) return; const amt = parseInt(newAmt);
     if (isNaN(amt)) { showToast('金額が正しくありません', true); return; }
-    const memo = prompt('変更メモ（任意）', e.memo || '');
-    if (memo === null) return;
+    const memo = prompt('変更メモ（任意）', e.memo || ''); if (memo === null) return;
 
     fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'changeCourse', enrollID: e.enrollID, newAmount: amt, memo }) })
     .then(r => r.json())
     .then(res => {
-      if (res.status === 'ok') { showToast('✅ コースを変更しました'); loadStudents(); }
-      else showToast('エラー：' + res.message, true);
-    })
-    .catch(() => showToast('通信エラー', true));
-  } else {
-    showToast('複数コースの場合はスプレッドシートで変更してください', true);
-  }
+      if (res.status === 'ok') { showToast('✅ コースを変更しました'); loadStudents(); } else showToast('エラー：' + res.message, true);
+    }).catch(() => showToast('通信エラー', true));
+  } else { showToast('複数コースの場合はスプレッドシートで変更してください', true); }
 }
 
 let chartVisible=false;
 function toggleChart(){
-  chartVisible=!chartVisible;
-  const canvas=document.getElementById('salesChart'), btn=document.getElementById('chartToggleBtn');
-  canvas.style.display=chartVisible?'block':'none';
-  btn.textContent=chartVisible?'📊 グラフを非表示':'📊 グラフを表示';
-  btn.classList.toggle('open',chartVisible);
-  if(chartVisible) drawChart();
+  chartVisible=!chartVisible; const canvas=document.getElementById('salesChart'), btn=document.getElementById('chartToggleBtn');
+  canvas.style.display=chartVisible?'block':'none'; btn.textContent=chartVisible?'📊 グラフを非表示':'📊 グラフを表示';
+  btn.classList.toggle('open',chartVisible); if(chartVisible) drawChart();
 }
 function drawChart(){
   const srcData=ALL_SALES[activeNendo]||[], nendo=parseInt(activeNendo), monthOrder=[];
@@ -518,8 +496,7 @@ function drawChart(){
   monthOrder.push({label:'1月',key:(nendo+1)+'年1月'});
   const labels=[],actuals=[],unitPrices=[];
   monthOrder.forEach(mo=>{
-    const md=srcData.filter(r=>r.month===mo.key);
-    if(!md.length) return;
+    const md=srcData.filter(r=>r.month===mo.key); if(!md.length) return;
     const tot=md.reduce((s,r)=>s+(r.actual||0),0), cnt=[...new Set(md.map(r=>r.name))].length;
     labels.push(mo.label); actuals.push(tot); unitPrices.push(cnt>0?Math.round(tot/cnt):0);
   });
@@ -542,15 +519,15 @@ function drawChart(){
   ctx.strokeStyle='#3fb950'; ctx.lineWidth=2; ctx.beginPath();
   unitPrices.forEach((v,i)=>{ const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
   unitPrices.forEach((v,i)=>{ const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP); ctx.fillStyle='#3fb950'; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill(); });
-  ctx.fillStyle='#8b949e'; ctx.font='11px sans-serif'; ctx.textAlign='center';
-  labels.forEach((l,i)=>{ ctx.fillText(l,pad.left+gap*i+gap/2,H-6); });
+  ctx.fillStyle='#8b949e'; ctx.font='11px sans-serif'; ctx.textAlign='center'; labels.forEach((l,i)=>{ ctx.fillText(l,pad.left+gap*i+gap/2,H-6); });
   ctx.fillStyle='#3fb950'; ctx.font='10px sans-serif'; ctx.textAlign='left';
   for(let i=0;i<=4;i++){ const y=pad.top+cH*(1-i/4); ctx.fillText('¥'+(maxP*i/4/1000).toFixed(0)+'k',W-pad.right+4,y+4); }
-  ctx.fillStyle='rgba(232,168,76,0.85)'; ctx.fillRect(pad.left,H-10,12,8); ctx.fillStyle='#8b949e'; ctx.textAlign='left'; ctx.font='10px sans-serif'; ctx.fillText('売上実績',pad.left+14,H-2);
-  ctx.fillStyle='#3fb950'; ctx.fillRect(pad.left+75,H-7,14,2); ctx.fillStyle='#8b949e'; ctx.fillText('月別単価',pad.left+91,H-2);
+  const lx=pad.left, ly=H-2; ctx.fillStyle='rgba(232,168,76,0.85)'; ctx.fillRect(lx,ly-8,12,8); ctx.fillStyle='#8b949e'; ctx.textAlign='left'; ctx.font='10px sans-serif'; ctx.fillText('売上実績',lx+14,ly);
+  ctx.fillStyle='#3fb950'; ctx.fillRect(lx+75,ly-5,14,2); ctx.fillStyle='#8b949e'; ctx.fillText('月別単価',lx+91,ly);
 }
 
-/* === 初期化 === */
+// 起動時に最新の生徒リストをGASから取得
+document.addEventListener('DOMContentLoaded', loadStudents);
 renderCtabs(); renderGrid(); document.getElementById('startDate').value=new Date().toISOString().split('T')[0];
 if(IS_NEW_NENDO) document.getElementById('gradeBanner').classList.add('show');
 </script>
