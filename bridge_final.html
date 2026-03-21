@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Bridge 生徒管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;--accent:#e8a84c;--accent2:#f0c97a;--text:#e6edf3;--muted:#8b949e;--ok:#3fb950;--ng:#f85149;--r:12px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;min-height:100vh;font-family:"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 20% 10%,rgba(232,168,76,.07),transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(63,185,80,.05),transparent 50%);}
+header{text-align:center;padding:24px 16px 0;}
+.logo{font-family:"DM Serif Display",serif;font-size:30px;color:var(--accent);letter-spacing:2px;}
+.sub{font-size:10px;color:var(--muted);letter-spacing:3px;margin-top:4px;text-transform:uppercase;}
+.tabs{display:flex;gap:4px;padding:16px 12px 0;max-width:680px;margin:0 auto;}
+.tab{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px 10px 0 0;color:var(--muted);padding:14px 4px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;border-bottom:none;text-align:center;min-height:50px;display:flex;align-items:center;justify-content:center;}
+.tab.active{background:var(--surface2);color:var(--accent);border-color:var(--accent);border-bottom-color:var(--surface2);}
+.box{max-width:680px;margin:0 auto;background:var(--surface2);border:1px solid var(--border);border-radius:0 0 var(--r) var(--r);padding:20px 14px 60px;}
+.pane{display:none;}.pane.active{display:block;}
+.stitle{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.stitle::after{content:"";flex:1;height:1px;background:var(--border);}
+.field{margin-bottom:14px;}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+input[type=text],input[type=date],select,input[type=search]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:13px;font-family:inherit;font-size:16px;transition:border-color .2s;appearance:none;-webkit-appearance:none;}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,168,76,.15);}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%278%27%3E%3Cpath d=%27M1 1l5 5 5-5%27 stroke=%27%238b949e%27 stroke-width=%271.5%27 fill=%27none%27 stroke-linecap=%27round%27/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn{width:100%;padding:15px;border:none;border-radius:10px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;min-height:52px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-danger{background:rgba(248,81,73,.15);border:1px solid var(--ng);color:var(--ng);}
+.btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--muted);}
+.btn-sm{padding:8px 12px;font-size:12px;min-height:34px;border-radius:6px;width:auto;font-weight:600;}
+.ctabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px;scrollbar-width:none;}
+.ctabs::-webkit-scrollbar{display:none;}
+.ctab{background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--muted);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;min-height:38px;transition:all .2s;}
+.ctab.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
+.cgrid{display:grid;grid-template-columns:1fr;gap:8px;}
+@media(min-width:420px){.cgrid{grid-template-columns:1fr 1fr;}}
+.citem{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:56px;transition:all .15s;}
+.citem.sel{border-color:var(--accent);background:rgba(232,168,76,.1);}
+.cname{font-size:13px;line-height:1.4;}
+.cprice{font-size:12px;color:var(--accent2);white-space:nowrap;font-weight:600;}
+.ccheck{width:20px;height:20px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;}
+.citem.sel .ccheck{background:var(--accent);border-color:var(--accent);color:#000;}
+.stags{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;}
+.stag{display:inline-flex;align-items:center;gap:5px;background:rgba(232,168,76,.12);border:1px solid rgba(232,168,76,.3);border-radius:20px;padding:5px 10px 5px 12px;font-size:13px;}
+.stag button{background:none;border:none;color:var(--accent);cursor:pointer;font-size:18px;line-height:1;padding:0;min-width:26px;min-height:26px;}
+.total-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin:16px 0 18px;}
+.total-val{font-size:24px;font-weight:700;color:var(--accent);}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.scard-head{padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.sname{font-size:16px;font-weight:700;}
+.sinfo{font-size:12px;color:var(--muted);margin-top:3px;}
+.stotal{font-size:16px;font-weight:700;color:var(--accent2);white-space:nowrap;}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;}
+.badge-ok{background:rgba(63,185,80,.15);color:var(--ok);}
+.scard-detail{display:none;border-top:1px solid var(--border);padding:12px 14px;}
+.scard-detail.open{display:block;}
+.enroll-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:6px;}
+.enroll-row:last-of-type{border-bottom:none;}
+.er-course{font-size:14px;font-weight:600;}
+.er-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.er-price{font-size:15px;font-weight:700;color:var(--accent2);}
+.action-row{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.year-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.ybtn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:10px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.ybtn.active{background:var(--accent);border-color:var(--accent);color:#000;}
+.month-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.mbtn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:9px 12px;font-family:inherit;font-size:13px;cursor:pointer;transition:all .2s;min-height:40px;}
+.mbtn.active{border-color:var(--accent);color:var(--accent);background:var(--surface2);}
+.mbtn.future{border-style:dashed;opacity:.55;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.sum-label{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;}
+.sum-val{font-size:22px;font-weight:700;color:var(--accent);}
+.sum-val.green{color:var(--ok);}
+.stbl{width:100%;border-collapse:collapse;font-size:13px;}
+.stbl th{font-size:11px;color:var(--muted);font-weight:600;text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);}
+.stbl td{padding:10px 6px;border-bottom:1px solid rgba(48,54,61,.4);vertical-align:middle;}
+.stbl tr:last-child td{border-bottom:none;}
+.td-r{text-align:right;font-weight:700;color:var(--accent2);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.overlay.hide{display:none;}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.mclose{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:14px;transition:transform .3s;z-index:200;white-space:nowrap;max-width:90vw;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:var(--ok);color:var(--ok);}
+.toast.err{border-color:var(--ng);color:var(--ng);}
+.empty{text-align:center;padding:32px;color:var(--muted);font-size:14px;}
+.loading{text-align:center;padding:32px;color:var(--muted);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">BRIDGE</div>
+  <div class="sub">Student Management System</div>
+</header>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('reg')">生徒登録</button>
+  <button class="tab" onclick="switchTab('mgr')">生徒管理</button>
+  <button class="tab" onclick="switchTab('sales')">売上照会</button>
+</div>
+<div class="box">
+<div id="pane-reg" class="pane active">
+  <div class="stitle">基本情報</div>
+  <div class="field"><label>氏名 *</label><input type="text" id="r-name" placeholder="田中 花子"></div>
+  <div class="row2">
+    <div class="field">
+      <label>学年</label>
+      <select id="r-grade">
+        <option value="">未選択</option>
+        <option>幼児</option><option>小1</option><option>小2</option><option>小3</option>
+        <option>小4</option><option>小5</option><option>小6</option>
+        <option>中1</option><option>中2</option><option>中3</option>
+        <option>高1</option><option>高2</option><option>高3</option>
+      </select>
+    </div>
+    <div class="field"><label>学校名</label><input type="text" id="r-school"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>入会日</label><input type="date" id="r-join"></div>
+    <div class="field"><label>メモ</label><input type="text" id="r-memo"></div>
+  </div>
+  <div class="stitle" style="margin-top:20px;">コース選択</div>
+  <div class="ctabs" id="reg-ctabs"><span style="color:var(--muted);font-size:13px;">読込中…</span></div>
+  <div class="cgrid" id="reg-cgrid"></div>
+  <div class="stags" id="reg-stags"></div>
+  <div class="total-box">
+    <span style="font-size:13px;color:var(--muted);">月額合計</span>
+    <span class="total-val">&yen;<span id="reg-total">0</span></span>
+  </div>
+  <button class="btn btn-primary" id="reg-btn" onclick="submitReg()">登録する</button>
+</div>
+<div id="pane-mgr" class="pane">
+  <div style="margin-bottom:14px;">
+    <input type="search" id="mgr-search" placeholder="氏名で検索…" oninput="renderMgr()">
+  </div>
+  <div id="mgr-list"><div class="loading">読込中…</div></div>
+</div>
+<div id="pane-sales" class="pane">
+  <div class="year-row" id="s-years"></div>
+  <div class="month-grid" id="s-months"></div>
+  <div id="s-content"><div class="loading">読込中…</div></div>
+</div>
+</div>
+<div class="overlay hide" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="add-modal-title">コース追加</span>
+      <button class="mclose" onclick="closeModal('add-modal')">&#x2715;</button>
+    </div>
+    <div class="ctabs" id="add-ctabs"></div>
+    <div class="cgrid" id="add-cgrid"></div>
+    <div class="stags" id="add-stags" style="margin:10px 0;min-height:30px;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('add-modal')">キャンセル</button>
+      <button class="btn btn-primary" style="flex:1;" id="add-btn">追加する</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var MONTHS=['2\u6708','3\u6708','4\u6708','5\u6708','6\u6708','7\u6708','8\u6708','9\u6708','10\u6708','11\u6708','12\u6708','1\u6708'];
+var GAS_URL='https://script.google.com/macros/s/AKfycbzp30OvZ1UOqIm2jPfAgbpwdLGia_Z4UGvAzrdpH3Pco32Ma3w1RJNL49z3JUUnY8Cz/exec';
+var ALL_STUDENTS=[],ALL_ENROLL=[],ALL_COURSES=[],ALL_SALES={};
+var regSel=[],addSel=[],addTargetID='',addTargetName='';
+var salesYear='',salesMonth='',salesLoading=false;
+
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('r-join').value=new Date().toISOString().slice(0,10);
+  init();
+});
+
+async function init(){
+  await Promise.all([loadCourses(),loadStudents()]);
+}
+
+async function gas(action,extra){
+  extra=extra||{};
+  var body=JSON.stringify(Object.assign({action:action},extra));
+  var r=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body});
+  var t=await r.text();
+  try{return JSON.parse(t);}catch(e){throw new Error('GAS\u5fdc\u7b54\u30a8\u30e9\u30fc: '+t.slice(0,80));}
+}
+
+function switchTab(id){
+  var tabs=['reg','mgr','sales'];
+  tabs.forEach(function(t,i){
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===id);
+    document.getElementById('pane-'+t).classList.toggle('active',t===id);
+  });
+  if(id==='sales'&&!salesLoading&&Object.keys(ALL_SALES).length===0) loadSales();
+}
+
+/* ==== \u30b3\u30fc\u30b9 ==== */
+async function loadCourses(){
+  try{
+    var r=await gas('getCourses');
+    if(r.status!=='ok') throw new Error(r.message);
+    ALL_COURSES=r.courses;
+    buildCtabs('reg-ctabs','reg-cgrid','reg');
+  }catch(e){
+    document.getElementById('reg-cgrid').innerHTML='<div class="empty">\u30b3\u30fc\u30b9\u53d6\u5f97\u5931\u6557: '+e.message+'</div>';
+  }
+}
+
+function buildCtabs(tabsId,gridId,mode){
+  var cats=['\u3059\u3079\u3066'];
+  ALL_COURSES.forEach(function(c){if(c.category&&cats.indexOf(c.category)<0) cats.push(c.category);});
+  var html='';
+  cats.forEach(function(c,i){
+    html+='<button class="ctab'+(i===0?' active':'')+'" onclick="filterCgrid(\''+tabsId+'\',\''+gridId+'\',\''+mode+'\',\''+c+'\',this)">'+c+'</button>';
+  });
+  document.getElementById(tabsId).innerHTML=html;
+  renderCgrid(gridId,ALL_COURSES,mode);
+}
+
+function filterCgrid(tabsId,gridId,mode,cat,btn){
+  document.querySelectorAll('#'+tabsId+' .ctab').forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  var list=cat==='\u3059\u3079\u3066'?ALL_COURSES:ALL_COURSES.filter(function(c){return c.category===cat;});
+  renderCgrid(gridId,list,mode);
+}
+
+function renderCgrid(gridId,list,mode){
+  var sel=mode==='reg'?regSel:addSel;
+  if(!list||!list.length){document.getElementById(gridId).innerHTML='<div class="empty">\u30b3\u30fc\u30b9\u306a\u3057</div>';return;}
+  var html='';
+  list.forEach(function(c){
+    var s=sel.some(function(x){return x.courseID===c.courseID;});
+    var nm=c.courseName||c.displayName||c.courseID;
+    var pr=c.price?'\uffe5'+Number(c.price).toLocaleString():'\u2013';
+    html+='<div class="citem'+(s?' sel':'')+'" data-id="'+c.courseID+'" onclick="toggleC(\''+c.courseID+'\',\''+mode+'\')">';
+    html+='<div><div class="cname">'+nm+'</div><div class="cprice">'+pr+'</div></div>';
+    html+='<div class="ccheck">'+(s?'\u2713':'')+'</div></div>';
+  });
+  document.getElementById(gridId).innerHTML=html;
+}
+
+function toggleC(courseID,mode){
+  var arr=mode==='reg'?regSel:addSel;
+  var course=null;
+  ALL_COURSES.forEach(function(c){if(c.courseID===courseID) course=c;});
+  if(!course) return;
+  var idx=-1;
+  arr.forEach(function(s,i){if(s.courseID===courseID) idx=i;});
+  if(idx>=0) arr.splice(idx,1); else arr.push(course);
+  var gridId=mode==='reg'?'reg-cgrid':'add-cgrid';
+  document.querySelectorAll('#'+gridId+' .citem').forEach(function(el){
+    if(el.dataset.id===courseID){
+      var s=arr.some(function(x){return x.courseID===courseID;});
+      el.classList.toggle('sel',s);
+      el.querySelector('.ccheck').textContent=s?'\u2713':'';
+    }
+  });
+  if(mode==='reg'){renderRegTags();updateRegTotal();}
+  else renderAddTags();
+}
+
+function renderRegTags(){
+  var html='';
+  regSel.forEach(function(s){
+    html+='<span class="stag">'+(s.courseName||s.courseID)+'<button onclick="toggleC(\''+s.courseID+'\',\'reg\')">&#x00D7;</button></span>';
+  });
+  document.getElementById('reg-stags').innerHTML=html;
+}
+function updateRegTotal(){
+  var t=regSel.reduce(function(s,c){return s+(c.price||0);},0);
+  document.getElementById('reg-total').textContent=t.toLocaleString();
+}
+function renderAddTags(){
+  var html='';
+  addSel.forEach(function(s){html+='<span class="stag">'+(s.courseName||s.courseID)+'</span>';});
+  document.getElementById('add-stags').innerHTML=html;
+}
+
+/* ==== \u751f\u5f92\u767b\u9332 ==== */
+async function submitReg(){
+  var name=document.getElementById('r-name').value.trim();
+  if(!name){showToast('\u6c0f\u540d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044','err');return;}
+  var btn=document.getElementById('reg-btn');
+  btn.disabled=true;btn.textContent='\u767b\u9332\u4e2d\u2026';
+  try{
+    var p={name:name,grade:document.getElementById('r-grade').value,
+      school:document.getElementById('r-school').value.trim(),
+      joinDate:document.getElementById('r-join').value,
+      memo:document.getElementById('r-memo').value.trim()};
+    var r=await gas('addStudent',p);
+    if(r.status!=='ok') throw new Error(r.message);
+    var sid=r.studentID;
+    for(var i=0;i<regSel.length;i++){
+      var c=regSel[i];
+      await gas('addEnrollment',{studentID:sid,studentName:name,
+        courseID:c.courseID,courseName:c.courseName||c.displayName||c.courseID,
+        standardPrice:c.price||0,startDate:p.joinDate});
+    }
+    showToast(name+' \u3092\u767b\u9332\u3057\u307e\u3057\u305f','ok');
+    document.getElementById('r-name').value='';
+    document.getElementById('r-school').value='';
+    document.getElementById('r-memo').value='';
+    document.getElementById('r-grade').value='';
+    document.getElementById('r-join').value=new Date().toISOString().slice(0,10);
+    regSel=[];renderRegTags();updateRegTotal();
+    document.querySelectorAll('#reg-cgrid .citem').forEach(function(el){
+      el.classList.remove('sel');el.querySelector('.ccheck').textContent='';
+    });
+    await loadStudents();
+  }catch(e){showToast('\u30a8\u30e9\u30fc: '+e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='\u767b\u9332\u3059\u308b';}
+}
+
+/* ==== \u751f\u5f92\u30fb\u5728\u7c4d\u8aad\u8fbc\u307f ==== */
+async function loadStudents(){
+  try{
+    var res=await Promise.all([gas('getStudents'),gas('getEnrollments')]);
+    if(res[0].status==='ok') ALL_STUDENTS=res[0].students;
+    if(res[1].status==='ok') ALL_ENROLL=res[1].enrollments;
+    renderMgr();
+  }catch(e){
+    document.getElementById('mgr-list').innerHTML='<div class="empty">\u8aad\u307f\u8fbc\u307f\u30a8\u30e9\u30fc: '+e.message+'</div>';
+  }
+}
+
+/* ==== \u751f\u5f92\u7ba1\u7406\uff08\u9000\u4f1a\u8005\u306f\u975e\u8868\u793a\uff09 ==== */
+function renderMgr(){
+  var q=(document.getElementById('mgr-search').value||'').toLowerCase();
+  var list=ALL_STUDENTS.filter(function(s){return s.isActive;});
+  if(q) list=list.filter(function(s){return s.name.toLowerCase().indexOf(q)>=0;});
+  list.sort(function(a,b){return a.name.localeCompare(b.name,'ja');});
+  var el=document.getElementById('mgr-list');
+  if(!list.length){el.innerHTML='<div class="empty">\u5728\u7c4d\u4e2d\u306e\u751f\u5f92\u304c\u3044\u307e\u305b\u3093</div>';return;}
+  var html='';
+  list.forEach(function(s){
+    var enrolls=ALL_ENROLL.filter(function(e){return e.studentID===s.studentID&&e.isActive;});
+    var total=enrolls.reduce(function(sum,e){return sum+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+    var courseRows='';
+    if(enrolls.length){
+      enrolls.forEach(function(e){
+        var price=e.overridePrice!=null?e.overridePrice:e.standardPrice;
+        var ov=e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:5px;">\u4e0a\u66f8</span>':'';
+        var eid=e.enrollID.replace(/'/g,"\\'");
+        var ecn=(e.courseName||'').replace(/'/g,"\\'");
+        courseRows+='<div class="enroll-row">';
+        courseRows+='<div style="flex:1;min-width:0;"><div class="er-course">'+( e.courseName||e.courseID)+'</div>';
+        courseRows+='<div class="er-meta">\u958b\u59cb: '+(e.startDate||'\u2013')+ov+'</div></div>';
+        courseRows+='<div style="display:flex;align-items:center;gap:8px;">';
+        courseRows+='<span class="er-price">\uffe5'+price.toLocaleString()+'</span>';
+        courseRows+='<button class="btn btn-ghost btn-sm" onclick="editPrice(\''+eid+'\',\''+ecn+'\','+price+',\''+s.studentID+'\')">\u5909\u66f4</button>';
+        courseRows+='<button class="btn btn-danger btn-sm" onclick="endEnroll(\''+eid+'\',\''+s.studentID+'\',\''+ecn+'\')">\u7d42\u4e86</button>';
+        courseRows+='</div></div>';
+      });
+    } else {
+      courseRows='<div style="font-size:13px;color:var(--muted);padding:6px 0;">\u30b3\u30fc\u30b9\u672a\u767b\u9332</div>';
+    }
+    var clist=enrolls.map(function(e){return '<span style="margin-right:6px;font-size:12px;color:var(--muted);">'+(e.courseName||e.courseID)+'</span>';}).join('');
+    html+='<div class="scard" id="sc-'+s.studentID+'">';
+    html+='<div class="scard-head" onclick="toggleCard(\''+s.studentID+'\')">';
+    html+='<div style="flex:1;min-width:0;">';
+    html+='<div class="sname">'+s.name+'</div>';
+    html+='<div class="sinfo">'+(s.grade||'\u2013')+(s.school?' / '+s.school:'')+'</div>';
+    html+='<div style="margin-top:6px;">'+(clist||'<span style="font-size:12px;color:var(--muted);">\u30b3\u30fc\u30b9\u306a\u3057</span>')+'</div>';
+    html+='</div>';
+    html+='<div style="text-align:right;flex-shrink:0;">';
+    html+='<span class="badge badge-ok">\u5728\u7c4d</span><br>';
+    html+='<span class="stotal" style="margin-top:6px;display:block;">\uffe5'+total.toLocaleString()+'/\u6708</span>';
+    html+='</div></div>';
+    html+='<div class="scard-detail" id="sd-'+s.studentID+'">';
+    html+=courseRows;
+    html+='<div class="action-row">';
+    html+='<button class="btn btn-ghost" style="flex:1;" onclick="openAddModal(\''+s.studentID+'\',\''+s.name.replace(/'/g,"\\'")+'\')">&#xff0b; \u30b3\u30fc\u30b9\u8ffd\u52a0</button>';
+    html+='<button class="btn btn-danger" style="flex:1;" onclick="doWithdraw(\''+s.studentID+'\',\''+s.name.replace(/'/g,"\\'")+'\')\">\u9000\u4f1a\u51e6\u7406</button>';
+    html+='</div></div></div>';
+  });
+  el.innerHTML=html;
+}
+
+function toggleCard(sid){
+  var el=document.getElementById('sd-'+sid);
+  if(el) el.classList.toggle('open');
+}
+
+async function editPrice(enrollID,courseName,current,studentID){
+  var v=prompt('\u300c'+courseName+'\u300d\u306e\u6708\u984d\u5909\u66f4\n\u73fe\u5728: \uffe5'+Number(current).toLocaleString()+'\n\n\u65b0\u3057\u3044\u91d1\u984d\uff08\u7a7a\u6b04\u3067\u30c7\u30d5\u30a9\u30eb\u30c8\u623b\u3057\uff09',current);
+  if(v===null) return;
+  var price=v.trim()===''?'':parseInt(v.replace(/\D/g,''));
+  try{
+    var r=await gas('updateEnrollment',{enrollID:enrollID,overridePrice:price});
+    if(r.status!=='ok') throw new Error(r.message);
+    showToast('\u6708\u984d\u3092\u66f4\u65b0\u3057\u307e\u3057\u305f','ok');
+    await loadStudents();
+    var el=document.getElementById('sd-'+studentID);
+    if(el) el.classList.add('open');
+  }catch(e){showToast('\u30a8\u30e9\u30fc: '+e.message,'err');}
+}
+
+async function endEnroll(enrollID,studentID,courseName){
+  if(!confirm('\u300c'+courseName+'\u300d\u3092\u7d42\u4e86\u3057\u307e\u3059\u304b\uff1f')) return;
+  try{
+    var r=await gas('endEnrollment',{enrollID:enrollID});
+    if(r.status!=='ok') throw new Error(r.message);
+    showToast('\u30b3\u30fc\u30b9\u3092\u7d42\u4e86\u3057\u307e\u3057\u305f','ok');
+    await loadStudents();
+    var el=document.getElementById('sd-'+studentID);
+    if(el) el.classList.add('open');
+  }catch(e){showToast('\u30a8\u30e9\u30fc: '+e.message,'err');}
+}
+
+async function doWithdraw(studentID,name){
+  if(!confirm(name+' \u3092\u9000\u4f1a\u51e6\u7406\u3057\u307e\u3059\u304b\uff1f\n\u203b\u30b9\u30d7\u30ec\u30c3\u30c9\u30b7\u30fc\u30c8\u306e\u30c7\u30fc\u30bf\u306f\u6b8b\u308a\u307e\u3059\u3002\u753b\u9762\u304b\u3089\u975e\u8868\u793a\u306b\u306a\u308a\u307e\u3059\u3002')) return;
+  var ld=prompt('\u9000\u4f1a\u65e5\uff08\u7a7a\u6b04\u3067\u672c\u65e5\uff09',new Date().toISOString().slice(0,10));
+  if(ld===null) return;
+  try{
+    var r=await gas('withdraw',{studentID:studentID,leaveDate:ld||''});
+    if(r.status!=='ok') throw new Error(r.message);
+    showToast(name+' \u3092\u9000\u4f1a\u51e6\u7406\u3057\u307e\u3057\u305f','ok');
+    await loadStudents();
+  }catch(e){showToast('\u30a8\u30e9\u30fc: '+e.message,'err');}
+}
+
+/* ==== \u30b3\u30fc\u30b9\u8ffd\u52a0\u30e2\u30fc\u30c0\u30eb ==== */
+function openAddModal(studentID,studentName){
+  addTargetID=studentID;addTargetName=studentName;addSel=[];
+  document.getElementById('add-modal-title').textContent=studentName+' \u306b\u30b3\u30fc\u30b9\u8ffd\u52a0';
+  document.getElementById('add-stags').innerHTML='';
+  buildCtabs('add-ctabs','add-cgrid','add');
+  document.getElementById('add-btn').onclick=confirmAdd;
+  document.getElementById('add-modal').classList.remove('hide');
+}
+
+async function confirmAdd(){
+  if(!addSel.length){showToast('\u30b3\u30fc\u30b9\u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044','err');return;}
+  var btn=document.getElementById('add-btn');
+  btn.disabled=true;btn.textContent='\u8ffd\u52a0\u4e2d\u2026';
+  try{
+    var today=new Date().toISOString().slice(0,10);
+    for(var i=0;i<addSel.length;i++){
+      var c=addSel[i];
+      await gas('addEnrollment',{studentID:addTargetID,studentName:addTargetName,
+        courseID:c.courseID,courseName:c.courseName||c.displayName||c.courseID,
+        standardPrice:c.price||0,startDate:today});
+    }
+    showToast('\u30b3\u30fc\u30b9\u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f','ok');
+    closeModal('add-modal');
+    await loadStudents();
+    var el=document.getElementById('sd-'+addTargetID);
+    if(el) el.classList.add('open');
+  }catch(e){showToast('\u30a8\u30e9\u30fc: '+e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='\u8ffd\u52a0\u3059\u308b';}
+}
+
+function closeModal(id){document.getElementById(id).classList.add('hide');}
+
+/* ==== \u58f2\u4e0a\u7167\u4f1a ==== */
+async function loadSales(){
+  if(salesLoading) return;
+  salesLoading=true;
+  document.getElementById('s-content').innerHTML='<div class="loading">\u8aad\u8fbc\u4e2d\u2026</div>';
+  try{
+    var r=await gas('getSales');
+    if(r.status!=='ok') throw new Error(r.message);
+    ALL_SALES=r.sales||{};
+    buildSalesUI();
+  }catch(e){
+    document.getElementById('s-content').innerHTML='<div class="empty">\u58f2\u4e0a\u30c7\u30fc\u30bf\u53d6\u5f97\u30a8\u30e9\u30fc: '+e.message+'</div>';
+  }finally{salesLoading=false;}
+}
+
+function buildSalesUI(){
+  var now=new Date();
+  var yr=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();
+  var dataYears=[];
+  Object.keys(ALL_SALES).forEach(function(k){
+    var m=k.match(/^(\d{4})\u5e74/);
+    if(m&&dataYears.indexOf(parseInt(m[1]))<0) dataYears.push(parseInt(m[1]));
+  });
+  var allYears=dataYears.slice();
+  [yr-1,yr,yr+1].forEach(function(y){if(allYears.indexOf(y)<0) allYears.push(y);});
+  allYears.sort();
+  if(!salesYear) salesYear=String(yr);
+  var html='';
+  allYears.forEach(function(y){
+    html+='<button class="ybtn'+(y==salesYear?' active':'')+'" onclick="selYear(\''+y+'\')"">'+y+'\u5e74\u5ea6</button>';
+  });
+  document.getElementById('s-years').innerHTML=html;
+  renderSalesMonths();
+}
+
+function selYear(y){
+  salesYear=y;salesMonth='';
+  document.querySelectorAll('.ybtn').forEach(function(b){b.classList.toggle('active',b.textContent===y+'\u5e74\u5ea6');});
+  renderSalesMonths();
+}
+
+function renderSalesMonths(){
+  var yr=parseInt(salesYear);
+  var now=new Date();
+  var keys=MONTHS.slice(0,11).map(function(m){return yr+'\u5e74'+m;});
+  keys.push((yr+1)+'\u5e741\u6708');
+  if(!salesMonth){
+    var latest=null;
+    for(var i=keys.length-1;i>=0;i--){if(ALL_SALES[keys[i]]){latest=keys[i];break;}}
+    salesMonth=latest||keys[keys.length-1];
+  }
+  var html='';
+  keys.forEach(function(key){
+    var parts=key.match(/^(\d{4})\u5e74(\d+)\u6708/);
+    var isFuture=parts&&new Date(parseInt(parts[1]),parseInt(parts[2])-1,2)>now;
+    var hasData=!!ALL_SALES[key];
+    var label=key.replace(/^\d{4}\u5e74/,'');
+    html+='<button class="mbtn'+(key===salesMonth?' active':'')+(isFuture&&!hasData?' future':'')+'" onclick="selMonth(\''+key+'\')">'+label+(isFuture&&!hasData?'*':'')+'</button>';
+  });
+  document.getElementById('s-months').innerHTML=html;
+  renderSalesDetail();
+}
+
+function selMonth(key){
+  salesMonth=key;
+  document.querySelectorAll('.mbtn').forEach(function(b){
+    var label=key.replace(/^\d{4}\u5e74/,'');
+    b.classList.toggle('active',b.textContent===label||b.textContent===label+'*');
+  });
+  renderSalesDetail();
+}
+
+function renderSalesDetail(){
+  var c=document.getElementById('s-content');
+  if(!salesMonth){c.innerHTML='<div class="empty">\u6708\u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044</div>';return;}
+  var parts=salesMonth.match(/^(\d{4})\u5e74(\d+)\u6708/);
+  var isFuture=parts&&new Date(parseInt(parts[1]),parseInt(parts[2])-1,2)>new Date();
+  var active=ALL_ENROLL.filter(function(e){return e.isActive;});
+  var enrollTotal=active.reduce(function(s,e){return s+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+  var enrollCount=[];
+  active.forEach(function(e){if(enrollCount.indexOf(e.studentID)<0) enrollCount.push(e.studentID);});
+
+  var html='<div class="sum-grid">';
+  html+='<div class="sum-card"><div class="sum-label">\u5728\u7c4d\u6708\u984d\u5408\u8a08</div><div class="sum-val">\uffe5'+enrollTotal.toLocaleString()+'</div></div>';
+  html+='<div class="sum-card"><div class="sum-label">\u5728\u7c4d\u751f\u5f92\u6570</div><div class="sum-val">'+enrollCount.length+'\u540d</div></div>';
+  html+='</div>';
+
+  if(isFuture){
+    html+='<div style="background:rgba(232,168,76,.08);border:1px solid rgba(232,168,76,.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--accent2);">';
+    html+='\ud83d\udcc5 \u3053\u306e\u6708\u306f\u672a\u6765\u3067\u3059\u3002\u73fe\u5728\u306e\u5728\u7c4d\u60c5\u5831\u3092\u8868\u793a\u3057\u3066\u3044\u307e\u3059\u3002</div>';
+  }
+
+  html+='<div class="stitle">\u5728\u7c4d\u30b3\u30fc\u30b9\u4e00\u89a7\uff08\u6708\u8b1d\u8a73\u7d30\uff09</div>';
+  if(active.length){
+    var byS={};
+    active.forEach(function(e){
+      if(!byS[e.studentID]) byS[e.studentID]={name:e.studentName,courses:[]};
+      byS[e.studentID].courses.push(e);
+    });
+    var names=Object.keys(byS).sort(function(a,b){return byS[a].name.localeCompare(byS[b].name,'ja');});
+    html+='<table class="stbl"><thead><tr><th>\u6c0f\u540d</th><th>\u30b3\u30fc\u30b9</th><th style="text-align:right">\u6708\u8b1d</th></tr></thead><tbody>';
+    names.forEach(function(sid){
+      var s=byS[sid];
+      var sub=s.courses.reduce(function(sum,e){return sum+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+      s.courses.forEach(function(e,i){
+        var price=e.overridePrice!=null?e.overridePrice:e.standardPrice;
+        var ov=e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:4px;">\u4e0a\u66f8</span>':'';
+        html+='<tr>';
+        if(i===0) html+='<td rowspan="'+s.courses.length+'" style="font-weight:700;vertical-align:top;">'+s.name+'</td>';
+        html+='<td>'+(e.courseName||e.courseID)+ov+'</td>';
+        html+='<td class="td-r">\uffe5'+price.toLocaleString()+'</td></tr>';
+      });
+      if(s.courses.length>1){
+        html+='<tr><td></td><td style="font-size:11px;color:var(--muted);">\u2500\u2500 \u5c0f\u8a08</td><td class="td-r" style="color:var(--accent2);">\uffe5'+sub.toLocaleString()+'</td></tr>';
+      }
+    });
+    html+='</tbody></table>';
+  }else{
+    html+='<div class="empty">\u5728\u7c4d\u30c7\u30fc\u30bf\u306a\u3057</div>';
+  }
+  c.innerHTML=html;
+}
+
+function showToast(msg,type){
+  type=type||'';
+  var el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+type+' show';
+  clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},3500);
+}
+</script>
+
+</body>
+</html>
