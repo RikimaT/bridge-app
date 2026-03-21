@@ -230,6 +230,7 @@ function loadSalesData(callback) {
       ALL_SALES = res.sales || {};
       salesLoaded = true;
       buildNendoButtons(); 
+      buildMonthButtons();
     }
     salesLoading = false;
     if (loadingEl) loadingEl.style.display = 'none';
@@ -256,14 +257,24 @@ let activeNendo = String(CUR_NENDO);
 let AVAILABLE_NENDOS = [String(CUR_NENDO)];
 
 function buildNendoButtons(){
-  const dataNendos = Object.keys(ALL_SALES).filter(n => parseInt(n) <= CUR_NENDO).sort();
+  // 6ヶ月先の年度まで表示を許可する
+  const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
+  const maxFutureNendo = (maxFuture.getMonth() + 1 >= 2) ? maxFuture.getFullYear() : maxFuture.getFullYear() - 1;
+  
+  const dataNendos = Object.keys(ALL_SALES).filter(n => parseInt(n) <= maxFutureNendo).sort();
   if (dataNendos.length > 0) {
     AVAILABLE_NENDOS = dataNendos;
   }
+  
+  if(!AVAILABLE_NENDOS.includes(activeNendo) && AVAILABLE_NENDOS.length > 0) {
+     activeNendo = AVAILABLE_NENDOS[AVAILABLE_NENDOS.length - 1];
+  }
+
   document.getElementById('nendoBtns').innerHTML = AVAILABLE_NENDOS.map(function(n){
     return '<button class="nbtn '+(n===activeNendo?'active':'')+'" onclick="setNendo(this.dataset.n)" data-n="'+n+'">'+n+'年度</button>';
   }).join('');
 }
+
 function setNendo(n){
   activeNendo=n; buildNendoButtons(); buildMonthButtons();
   document.getElementById('searchName').value='';
@@ -272,25 +283,34 @@ function setNendo(n){
 }
 
 function buildMonthButtons(){
-  const nendo=parseInt(activeNendo);
-  const months=[];
-  for(let m=2;m<=12;m++){
-    const passed=CUR_NENDO>nendo||(CUR_NENDO===nendo&&CUR_MONTH>=m);
-    if(passed) months.push({label:m+'月',key:nendo+'年'+m+'月'});
+  const nendo = parseInt(activeNendo);
+  const months = [];
+  
+  // 現在から6ヶ月先までの上限を算出
+  const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
+  const maxY = maxFuture.getFullYear();
+  const maxM = maxFuture.getMonth() + 1;
+
+  for(let m=2; m<=12; m++){
+    const isFuture = (nendo > maxY) || (nendo === maxY && m > maxM);
+    if(!isFuture) months.push({label:m+'月',key:nendo+'年'+m+'月'});
   }
-  const janY=nendo+1;
-  const janPassed=CUR_YEAR>janY||(CUR_YEAR===janY&&CUR_MONTH>=1);
-  if(janPassed) months.push({label:'1月',key:janY+'年1月'});
-  let curKey;
-  if(activeNendo===String(CUR_NENDO)){
-    curKey=CUR_MONTH===1?(nendo+1)+'年1月':nendo+'年'+CUR_MONTH+'月';
-  } else {
-    curKey=months[months.length-1]?.key||'';
+  const janY = nendo + 1;
+  const isJanFuture = (janY > maxY) || (janY === maxY && 1 > maxM);
+  if(!isJanFuture) months.push({label:'1月',key:janY+'年1月'});
+
+  let curKey = months.find(m => m.key === activeMonth) ? activeMonth : '';
+  if (!curKey) {
+    if (activeNendo === String(CUR_NENDO)) {
+      curKey = CUR_MONTH === 1 ? (CUR_NENDO + 1) + '年1月' : CUR_NENDO + '年' + CUR_MONTH + '月';
+    }
+    activeMonth = (months.find(m => m.key === curKey) || months[months.length - 1] || {}).key || '';
   }
-  activeMonth=(months.find(m=>m.key===curKey)||months[months.length-1]||{}).key||'';
-  document.getElementById('monthBtns').innerHTML=months.map(function(m){
+
+  document.getElementById('monthBtns').innerHTML = months.map(function(m){
     return '<button class="mbtn '+(m.key===activeMonth?'active':'')+'" data-m="'+m.key+'" onclick="setMonth(this.dataset.m)">'+m.label+'</button>';
   }).join('');
+  
   document.getElementById('salesTitle').textContent=activeNendo+'年度 月別売上照会';
   document.getElementById('nendoLabel').innerHTML='表示期間：<span>'+nendo+'年2月 〜 '+(nendo+1)+'年1月</span>　現在：<span>'+CUR_YEAR+'年'+CUR_MONTH+'月</span>';
 }
@@ -419,6 +439,11 @@ function loadStudents() {
   .then(res => {
     if (res.status === 'ok') {
       studentsCache = res.students;
+      studentsCache.forEach(s => {
+        if (s.withdrawDate && s.withdrawDate !== '') {
+          s.isActive = false; 
+        }
+      });
       status.style.display = 'none';
       renderManage();
     } else {
@@ -431,33 +456,25 @@ function loadStudents() {
 function renderManage() {
   const q = document.getElementById('manageSearch').value.trim().toLowerCase();
   const filterSelect = document.getElementById('manageFilter');
-  const filterVal = filterSelect.value; // 'active', 'all', 'inactive'
+  const filterVal = filterSelect.value;
   const list = document.getElementById('manageList');
 
-  // ★今回の超重要ポイント：ブラウザの思い込みを完全に防ぐ、厳密な「在籍」判定
   let students = studentsCache.map(s => {
     let active = s.isActive;
-    // 退会日に少しでも文字が入っていれば、絶対に「退会済み（active = false）」とする
     if (s.withdrawDate && s.withdrawDate.trim() !== '') {
       active = false;
     }
-    // 古い s.isActive ではなく、ここで判定した「真の在籍状態 (isActuallyActive)」をデータに持たせる
     return { ...s, isActuallyActive: active };
   });
 
-  // フィルター適用
   if (filterVal === 'active') {
     students = students.filter(s => s.isActuallyActive === true);
   } else if (filterVal === 'inactive') {
     students = students.filter(s => s.isActuallyActive === false);
   }
-
-  // 検索適用
   if (q) {
     students = students.filter(s => s.name.toLowerCase().includes(q));
   }
-
-  // 名前順ソート
   students.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
 
   if (!students.length) {
@@ -469,13 +486,10 @@ function renderManage() {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
     const enrollInfo = s.courses || (activeEnrolls.map(e => e.memo || '').filter(Boolean).join('・')) || '—';
-    
-    // バッジも真の在籍状態で色を変える
     const statusBadge = s.isActuallyActive
       ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
       : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
 
-    // 退会処理ボタンは、真の在籍状態の生徒にだけ表示する
     const withdrawBtn = s.isActuallyActive ? `
       <button onclick="openWithdraw('${s.studentID}','${s.name}')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>` : '';
 
@@ -512,7 +526,6 @@ function openWithdraw(studentID, name) {
   .then(res => {
     if (res.status === 'ok') {
       showToast('✅ ' + name + 'さんを退会処理しました');
-      // 強制的にフィルターを「在籍中のみ」に固定して再読込
       document.getElementById('manageFilter').value = 'active';
       loadStudents();
     } else {
