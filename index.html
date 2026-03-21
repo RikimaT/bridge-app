@@ -378,7 +378,6 @@ function switchTab(t){
   if(t==='manage') loadStudents();
 }
 
-
 let activeMonth='';
 function setMonth(m){ activeMonth=m; document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.m===m)); renderSales(); }
 
@@ -420,14 +419,6 @@ function loadStudents() {
   .then(res => {
     if (res.status === 'ok') {
       studentsCache = res.students;
-      
-      // ★今回の超重要修正ポイント：退会日が入っている生徒を「強制的に退会扱い」に上書きするフィルター
-      studentsCache.forEach(s => {
-        if (s.withdrawDate && s.withdrawDate !== '') {
-          s.isActive = false; // これで古いデータ列の情報を上書きします
-        }
-      });
-
       status.style.display = 'none';
       renderManage();
     } else {
@@ -439,14 +430,34 @@ function loadStudents() {
 
 function renderManage() {
   const q = document.getElementById('manageSearch').value.trim().toLowerCase();
-  const filter = document.getElementById('manageFilter').value;
+  const filterSelect = document.getElementById('manageFilter');
+  const filterVal = filterSelect.value; // 'active', 'all', 'inactive'
   const list = document.getElementById('manageList');
 
-  let students = studentsCache;
-  if (filter === 'active') students = students.filter(s => s.isActive);
-  else if (filter === 'inactive') students = students.filter(s => !s.isActive);
-  if (q) students = students.filter(s => s.name.toLowerCase().includes(q));
+  // ★今回の超重要ポイント：ブラウザの思い込みを完全に防ぐ、厳密な「在籍」判定
+  let students = studentsCache.map(s => {
+    let active = s.isActive;
+    // 退会日に少しでも文字が入っていれば、絶対に「退会済み（active = false）」とする
+    if (s.withdrawDate && s.withdrawDate.trim() !== '') {
+      active = false;
+    }
+    // 古い s.isActive ではなく、ここで判定した「真の在籍状態 (isActuallyActive)」をデータに持たせる
+    return { ...s, isActuallyActive: active };
+  });
 
+  // フィルター適用
+  if (filterVal === 'active') {
+    students = students.filter(s => s.isActuallyActive === true);
+  } else if (filterVal === 'inactive') {
+    students = students.filter(s => s.isActuallyActive === false);
+  }
+
+  // 検索適用
+  if (q) {
+    students = students.filter(s => s.name.toLowerCase().includes(q));
+  }
+
+  // 名前順ソート
   students.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
 
   if (!students.length) {
@@ -458,14 +469,17 @@ function renderManage() {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
     const enrollInfo = s.courses || (activeEnrolls.map(e => e.memo || '').filter(Boolean).join('・')) || '—';
-    const statusBadge = s.isActive
+    
+    // バッジも真の在籍状態で色を変える
+    const statusBadge = s.isActuallyActive
       ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
       : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
 
-    const withdrawBtn = s.isActive ? `
+    // 退会処理ボタンは、真の在籍状態の生徒にだけ表示する
+    const withdrawBtn = s.isActuallyActive ? `
       <button onclick="openWithdraw('${s.studentID}','${s.name}')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>` : '';
 
-    const changeBtn = s.isActive && activeEnrolls.length > 0 ? `
+    const changeBtn = s.isActuallyActive && activeEnrolls.length > 0 ? `
       <button onclick="openChangeCourse('${s.studentID}','${s.name}',${JSON.stringify(activeEnrolls).replace(/'/g,"\'")})" style="background:rgba(232,168,76,.1);border:1px solid rgba(232,168,76,.3);border-radius:8px;color:var(--accent);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">コース変更</button>` : '';
 
     return `<div class="student-card">
@@ -476,7 +490,7 @@ function renderManage() {
         </div>
         ${totalAmount > 0 ? `<div class="sc-total">¥${totalAmount.toLocaleString()}</div>` : ''}
       </div>
-      ${s.isActive ? `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${withdrawBtn}${changeBtn}</div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">退会日：${s.withdrawDate || '—'}</div>`}
+      ${s.isActuallyActive ? `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${withdrawBtn}${changeBtn}</div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">退会日：${s.withdrawDate || '—'}</div>`}
     </div>`;
   }).join('');
 }
@@ -498,6 +512,7 @@ function openWithdraw(studentID, name) {
   .then(res => {
     if (res.status === 'ok') {
       showToast('✅ ' + name + 'さんを退会処理しました');
+      // 強制的にフィルターを「在籍中のみ」に固定して再読込
       document.getElementById('manageFilter').value = 'active';
       loadStudents();
     } else {
