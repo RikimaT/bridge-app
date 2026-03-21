@@ -256,7 +256,7 @@ let salesLoading = false;
 function loadSalesData() {
   if (salesLoading) return;
   salesLoading = true;
-  document.getElementById('summaryRow').innerHTML = '<div style="grid-column: span 3;text-align:center;padding:20px;color:var(--text-muted);">売上データを読み込み中...</div>';
+  document.getElementById('summaryRow').innerHTML = '<div style="grid-column: span 3;text-align:center;padding:20px;color:var(--text-muted);">スプレッドシートから最新データを読込中...</div>';
   
   fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getSales' }) })
   .then(r => r.json())
@@ -268,8 +268,8 @@ function loadSalesData() {
       buildMonthButtons();
       renderSales();
     } else if (res.message && res.message.includes('不明なアクション')) {
-      alert("【超重要】GASのコードが古いままです！\n\nGASエディタ右上の「デプロイ」→「デプロイを管理」→「新バージョン」で更新してください。これをやらないとデータは表示されません！");
-      showToast('GASの更新（デプロイ）が必要です', true);
+      alert("【超重要エラー！】GASのコードが古いままです！\n\nGAS画面右上の「デプロイ」→「デプロイを管理」→鉛筆マーク→「新バージョン」を選んで更新してください。これをやらないと最新データは取得できません！");
+      showToast('GASの更新（新バージョンでデプロイ）が必要です', true);
     } else {
       showToast('売上読込エラー', true);
     }
@@ -403,7 +403,7 @@ function loadStudents() {
       status.style.display = 'none';
       renderManage();
     } else if (res.message && res.message.includes('不明なアクション')) {
-      alert("【超重要】GASのコードが古いままです！\n\nGASエディタ右上の「デプロイ」→「デプロイを管理」→「新バージョン」で更新してください。");
+      alert("【超重要エラー！】GASのコードが古いままです！\n\nGAS画面右上の「デプロイ」→「デプロイを管理」→鉛筆マーク→「新バージョン」を選んで更新してください。これをやらないと最新データは取得できません！");
       status.textContent = 'GASのデプロイを更新してください';
     } else {
       status.textContent = 'エラー：' + res.message;
@@ -434,7 +434,6 @@ function renderManage() {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
     
-    // 【絶対表示させる仕組み】コース名が取れていなくてもメモを表示、それもなければ「読込エラー回避」
     const enrollInfo = activeEnrolls.length > 0 
       ? activeEnrolls.map(e => (e.courseName || e.memo || 'コース設定なし')).filter(Boolean).join('・') 
       : '—';
