@@ -110,8 +110,6 @@
   .nbtn.active { background:var(--accent); border-color:var(--accent); color:#000; }
   .chart-toggle-btn { background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text-muted); padding:10px 20px; font-size:13px; cursor:pointer; font-family:inherit; transition:all .2s; }
   .chart-toggle-btn.open { border-color:var(--accent); color:var(--accent); }
-    @keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
 <body>
@@ -129,7 +127,7 @@
     <div class="section-title">生徒管理</div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
       <input type="search" id="manageSearch" placeholder="🔍 生徒名で検索..." oninput="renderManage()" style="flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:13px;font-family:inherit;font-size:16px">
-      <select id="manageFilter" onchange="renderManage()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:13px;font-family:inherit;font-size:14px;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b949e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 13px center;padding-right:36px;appearance:none;-webkit-appearance:none">
+      <select id="manageFilter" onchange="renderManage()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:13px;font-family:inherit;font-size:14px;appearance:none;">
         <option value="active">在籍中のみ</option>
         <option value="all">全員</option>
         <option value="inactive">退会済み</option>
@@ -201,119 +199,6 @@
 </div>
 <div class="toast" id="toast"></div>
 <script>
-/* === 売上データ（GASリアルタイム取得） === */
-let ALL_SALES = {};
-let salesLoaded = false;
-let salesLoading = false;
-
-// GASのURL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
-
-function loadSalesData(callback) {
-  if (salesLoading) { setTimeout(() => loadSalesData(callback), 300); return; }
-  salesLoading = true;
-  const loadingEl = document.getElementById('salesLoading');
-  if (loadingEl) loadingEl.style.display = 'block';
-
-  fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'getSales' })
-  })
-  .then(r => r.json())
-  .then(res => {
-    if (res.status === 'ok') {
-      ALL_SALES = res.sales || {};
-      salesLoaded = true;
-      buildNendoButtons(); 
-      buildMonthButtons();
-      renderSales();
-    }
-    salesLoading = false;
-    if (loadingEl) loadingEl.style.display = 'none';
-    callback && callback();
-  })
-  .catch(err => {
-    salesLoading = false;
-    if (loadingEl) loadingEl.style.display = 'none';
-    callback && callback();
-  });
-}
-
-/* === 日付・年度 === */
-const NOW = new Date();
-const CUR_YEAR = NOW.getFullYear();
-const CUR_MONTH = NOW.getMonth() + 1;
-const CUR_NENDO = CUR_MONTH >= 2 ? CUR_YEAR : CUR_YEAR - 1;
-const IS_NEW_NENDO = CUR_MONTH >= 2;
-const NENDO = CUR_NENDO;
-
-document.getElementById('headerSub').textContent = '生徒管理システム ' + CUR_NENDO + '年度';
-
-let activeNendo = String(CUR_NENDO);
-let AVAILABLE_NENDOS = [String(CUR_NENDO)];
-
-function buildNendoButtons(){
-  // 6ヶ月先の年度まで表示を許可
-  const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
-  const maxFutureNendo = (maxFuture.getMonth() + 1 >= 2) ? maxFuture.getFullYear() : maxFuture.getFullYear() - 1;
-  
-  const dataNendos = Object.keys(ALL_SALES).filter(n => parseInt(n) <= maxFutureNendo).sort();
-  if (dataNendos.length > 0) {
-    AVAILABLE_NENDOS = dataNendos;
-  }
-  
-  if(!AVAILABLE_NENDOS.includes(activeNendo) && AVAILABLE_NENDOS.length > 0) {
-     activeNendo = AVAILABLE_NENDOS[AVAILABLE_NENDOS.length - 1];
-  }
-
-  document.getElementById('nendoBtns').innerHTML = AVAILABLE_NENDOS.map(function(n){
-    return '<button class="nbtn '+(n===activeNendo?'active':'')+'" onclick="setNendo(this.dataset.n)" data-n="'+n+'">'+n+'年度</button>';
-  }).join('');
-}
-
-function setNendo(n){
-  activeNendo=n; buildNendoButtons(); buildMonthButtons();
-  document.getElementById('searchName').value='';
-  if(chartVisible) drawChart();
-  renderSales();
-}
-
-function buildMonthButtons(){
-  const nendo = parseInt(activeNendo);
-  const months = [];
-  
-  // 現在から6ヶ月先までの上限
-  const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
-  const maxY = maxFuture.getFullYear();
-  const maxM = maxFuture.getMonth() + 1;
-
-  for(let m=2; m<=12; m++){
-    const y = nendo;
-    if(y < maxY || (y === maxY && m <= maxM)) {
-        months.push({label:m+'月',key:y+'年'+m+'月'});
-    }
-  }
-  const janY = nendo + 1;
-  if(janY < maxY || (janY === maxY && 1 <= maxM)) {
-      months.push({label:'1月',key:janY+'年1月'});
-  }
-
-  let curKey = months.find(m => m.key === activeMonth) ? activeMonth : '';
-  if (!curKey) {
-    if (activeNendo === String(CUR_NENDO)) {
-      curKey = CUR_MONTH === 1 ? (CUR_NENDO + 1) + '年1月' : CUR_NENDO + '年' + CUR_MONTH + '月';
-    }
-    activeMonth = (months.find(m => m.key === curKey) || months[months.length - 1] || {}).key || '';
-  }
-
-  document.getElementById('monthBtns').innerHTML = months.map(function(m){
-    return '<button class="mbtn '+(m.key===activeMonth?'active':'')+'" data-m="'+m.key+'" onclick="setMonth(this.dataset.m)">'+m.label+'</button>';
-  }).join('');
-  
-  document.getElementById('salesTitle').textContent=activeNendo+'年度 月別売上照会';
-  document.getElementById('nendoLabel').innerHTML='表示期間：<span>'+nendo+'年2月 〜 '+(nendo+1)+'年1月</span>　現在：<span>'+CUR_YEAR+'年'+CUR_MONTH+'月</span>';
-}
-
 /* === コースマスタ === */
 const COURSES = [
   {id:'c1',区分:'ブリッジ(塾)',name:'ブリッジ 小学生 通い放題',grade:'小学生',price:17000},
@@ -361,6 +246,41 @@ function renderTags(){
 }
 function updateTotal(){ const t=COURSES.filter(c=>selected.has(c.id)).reduce((s,c)=>s+c.price,0); document.getElementById('totalAmt').innerHTML='¥'+t.toLocaleString()+'<span>/ 月</span>'; }
 
+// ★設定済みのGAS URL★
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
+
+let ALL_SALES = {};
+let salesLoaded = false;
+let salesLoading = false;
+
+function loadSalesData() {
+  if (salesLoading) return;
+  salesLoading = true;
+  document.getElementById('summaryRow').innerHTML = '<div style="grid-column: span 3;text-align:center;padding:20px;color:var(--text-muted);">売上データを読み込み中...</div>';
+  
+  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getSales' }) })
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === 'ok') {
+      ALL_SALES = res.sales || {};
+      salesLoaded = true;
+      buildNendoButtons(); 
+      buildMonthButtons();
+      renderSales();
+    } else if (res.message && res.message.includes('不明なアクション')) {
+      alert("【超重要】GASのコードが古いままです！\n\nGASエディタ右上の「デプロイ」→「デプロイを管理」→「新バージョン」で更新してください。これをやらないとデータは表示されません！");
+      showToast('GASの更新（デプロイ）が必要です', true);
+    } else {
+      showToast('売上読込エラー', true);
+    }
+    salesLoading = false;
+  })
+  .catch(err => {
+    showToast('通信エラー', true);
+    salesLoading = false;
+  });
+}
+
 function submitData(){
   const name=document.getElementById('name').value.trim(), grade=document.getElementById('grade').value;
   if(!name||!grade){ showToast('氏名と学年は必須です',true); return; }
@@ -394,7 +314,54 @@ function switchTab(t){
   if(t==='manage') loadStudents();
 }
 
+const NOW = new Date();
+const CUR_YEAR = NOW.getFullYear();
+const CUR_MONTH = NOW.getMonth() + 1;
+const CUR_NENDO = CUR_MONTH >= 2 ? CUR_YEAR : CUR_YEAR - 1;
+const IS_NEW_NENDO = CUR_MONTH >= 2;
+
+document.getElementById('headerSub').textContent = '生徒管理システム ' + CUR_NENDO + '年度';
+
+let activeNendo = String(CUR_NENDO);
+let AVAILABLE_NENDOS = [String(CUR_NENDO)];
+
+function buildNendoButtons(){
+  const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
+  const maxFutureNendo = (maxFuture.getMonth() + 1 >= 2) ? maxFuture.getFullYear() : maxFuture.getFullYear() - 1;
+  const dataNendos = Object.keys(ALL_SALES).filter(n => parseInt(n) <= maxFutureNendo).sort();
+  if (dataNendos.length > 0) AVAILABLE_NENDOS = dataNendos;
+  if(!AVAILABLE_NENDOS.includes(activeNendo) && AVAILABLE_NENDOS.length > 0) activeNendo = AVAILABLE_NENDOS[AVAILABLE_NENDOS.length - 1];
+  document.getElementById('nendoBtns').innerHTML = AVAILABLE_NENDOS.map(n => '<button class="nbtn '+(n===activeNendo?'active':'')+'" onclick="setNendo(this.dataset.n)" data-n="'+n+'">'+n+'年度</button>').join('');
+}
+function setNendo(n){
+  activeNendo=n; buildNendoButtons(); buildMonthButtons(); document.getElementById('searchName').value='';
+  if(chartVisible) drawChart(); renderSales();
+}
+
 let activeMonth='';
+function buildMonthButtons(){
+  const nendo = parseInt(activeNendo);
+  const months = [];
+  const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
+  const maxY = maxFuture.getFullYear(), maxM = maxFuture.getMonth() + 1;
+
+  for(let m=2; m<=12; m++){
+    if(nendo < maxY || (nendo === maxY && m <= maxM)) months.push({label:m+'月',key:nendo+'年'+m+'月'});
+  }
+  const janY = nendo + 1;
+  if(janY < maxY || (janY === maxY && 1 <= maxM)) months.push({label:'1月',key:janY+'年1月'});
+
+  let curKey = months.find(m => m.key === activeMonth) ? activeMonth : '';
+  if (!curKey) {
+    if (activeNendo === String(CUR_NENDO)) curKey = CUR_MONTH === 1 ? (CUR_NENDO + 1) + '年1月' : CUR_NENDO + '年' + CUR_MONTH + '月';
+    activeMonth = (months.find(m => m.key === curKey) || months[months.length - 1] || {}).key || '';
+  }
+
+  document.getElementById('monthBtns').innerHTML = months.map(m => '<button class="mbtn '+(m.key===activeMonth?'active':'')+'" data-m="'+m.key+'" onclick="setMonth(this.dataset.m)">'+m.label+'</button>').join('');
+  document.getElementById('salesTitle').textContent=activeNendo+'年度 月別売上照会';
+  document.getElementById('nendoLabel').innerHTML='表示期間：<span>'+nendo+'年2月 〜 '+(nendo+1)+'年1月</span>　現在：<span>'+CUR_YEAR+'年'+CUR_MONTH+'月</span>';
+}
+
 function setMonth(m){ activeMonth=m; document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.m===m)); renderSales(); }
 
 function renderSales(){
@@ -427,21 +394,17 @@ function loadStudents() {
   status.textContent = '読み込み中...';
   list.innerHTML = '';
 
-  fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'getStudents' })
-  })
+  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents' }) })
   .then(r => r.json())
   .then(res => {
     if (res.status === 'ok') {
       studentsCache = res.students;
-      studentsCache.forEach(s => {
-        if (s.withdrawDate && s.withdrawDate !== '') {
-          s.isActive = false; 
-        }
-      });
+      studentsCache.forEach(s => { if (s.withdrawDate && s.withdrawDate !== '') s.isActive = false; });
       status.style.display = 'none';
       renderManage();
+    } else if (res.message && res.message.includes('不明なアクション')) {
+      alert("【超重要】GASのコードが古いままです！\n\nGASエディタ右上の「デプロイ」→「デプロイを管理」→「新バージョン」で更新してください。");
+      status.textContent = 'GASのデプロイを更新してください';
     } else {
       status.textContent = 'エラー：' + res.message;
     }
@@ -451,51 +414,37 @@ function loadStudents() {
 
 function renderManage() {
   const q = document.getElementById('manageSearch').value.trim().toLowerCase();
-  const filterSelect = document.getElementById('manageFilter');
-  const filterVal = filterSelect.value;
+  const filterVal = document.getElementById('manageFilter').value;
   const list = document.getElementById('manageList');
 
   let students = studentsCache.map(s => {
     let active = s.isActive;
-    if (s.withdrawDate && s.withdrawDate.trim() !== '') {
-      active = false;
-    }
+    if (s.withdrawDate && s.withdrawDate.trim() !== '') active = false;
     return { ...s, isActuallyActive: active };
   });
 
-  if (filterVal === 'active') {
-    students = students.filter(s => s.isActuallyActive === true);
-  } else if (filterVal === 'inactive') {
-    students = students.filter(s => s.isActuallyActive === false);
-  }
-  if (q) {
-    students = students.filter(s => s.name.toLowerCase().includes(q));
-  }
+  if (filterVal === 'active') students = students.filter(s => s.isActuallyActive === true);
+  else if (filterVal === 'inactive') students = students.filter(s => s.isActuallyActive === false);
+  if (q) students = students.filter(s => s.name.toLowerCase().includes(q));
   students.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
 
-  if (!students.length) {
-    list.innerHTML = '<div class="no-results">該当する生徒が見つかりません</div>';
-    return;
-  }
+  if (!students.length) { list.innerHTML = '<div class="no-results">該当する生徒が見つかりません</div>'; return; }
 
   list.innerHTML = students.map(s => {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
     
-    // ★ここで確実にコース名とメモを表示させるように修正
+    // 【絶対表示させる仕組み】コース名が取れていなくてもメモを表示、それもなければ「読込エラー回避」
     const enrollInfo = activeEnrolls.length > 0 
-      ? activeEnrolls.map(e => e.courseName + (e.memo ? ' ('+e.memo+')' : '')).filter(Boolean).join('・') 
+      ? activeEnrolls.map(e => (e.courseName || e.memo || 'コース設定なし')).filter(Boolean).join('・') 
       : '—';
 
     const statusBadge = s.isActuallyActive
       ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
       : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
 
-    const withdrawBtn = s.isActuallyActive ? `
-      <button onclick="openWithdraw('${s.studentID}','${s.name}')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>` : '';
-
-    const changeBtn = s.isActuallyActive && activeEnrolls.length > 0 ? `
-      <button onclick="openChangeCourse('${s.studentID}','${s.name}',${JSON.stringify(activeEnrolls).replace(/'/g,"\'")})" style="background:rgba(232,168,76,.1);border:1px solid rgba(232,168,76,.3);border-radius:8px;color:var(--accent);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">コース変更</button>` : '';
+    const withdrawBtn = s.isActuallyActive ? `<button onclick="openWithdraw('${s.studentID}','${s.name}')" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--danger);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">退会処理</button>` : '';
+    const changeBtn = s.isActuallyActive && activeEnrolls.length > 0 ? `<button onclick="openChangeCourse('${s.studentID}','${s.name}',${JSON.stringify(activeEnrolls).replace(/'/g,"\'")})" style="background:rgba(232,168,76,.1);border:1px solid rgba(232,168,76,.3);border-radius:8px;color:var(--accent);padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;min-height:36px">コース変更</button>` : '';
 
     return `<div class="student-card">
       <div class="sc-header">
@@ -515,29 +464,21 @@ function openWithdraw(studentID, name) {
   const d = prompt(`${name}さんを退会処理します。\n退会日を入力してください（例：2026/03/31）`, date.replace(/-/g, '/'));
   if (!d) return;
   if (!confirm(`${name}さんを ${d} で退会処理しますか？\nEnrollmentsシートのIsActiveがFALSEになります。`)) return;
-
   const btn = window.event ? window.event.target : null;
   if(btn) { btn.disabled = true; btn.textContent = '処理中...'; }
 
-  fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'withdraw', studentID, withdrawDate: d })
-  })
+  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'withdraw', studentID, withdrawDate: d }) })
   .then(r => r.json())
   .then(res => {
     if (res.status === 'ok') {
       showToast('✅ ' + name + 'さんを退会処理しました');
-      document.getElementById('manageFilter').value = 'active';
-      loadStudents();
+      document.getElementById('manageFilter').value = 'active'; loadStudents();
     } else {
       showToast('エラー：' + res.message, true);
       if(btn) { btn.disabled = false; btn.textContent = '退会処理'; }
     }
   })
-  .catch(() => { 
-    showToast('通信エラー', true); 
-    if(btn) { btn.disabled = false; btn.textContent = '退会処理'; } 
-  });
+  .catch(() => { showToast('通信エラー', true); if(btn) { btn.disabled = false; btn.textContent = '退会処理'; } });
 }
 
 function openChangeCourse(studentID, name, enrollments) {
@@ -551,10 +492,7 @@ function openChangeCourse(studentID, name, enrollments) {
     const memo = prompt('変更メモ（任意）', e.memo || '');
     if (memo === null) return;
 
-    fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'changeCourse', enrollID: e.enrollID, newAmount: amt, memo })
-    })
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'changeCourse', enrollID: e.enrollID, newAmount: amt, memo }) })
     .then(r => r.json())
     .then(res => {
       if (res.status === 'ok') { showToast('✅ コースを変更しました'); loadStudents(); }
@@ -566,93 +504,55 @@ function openChangeCourse(studentID, name, enrollments) {
   }
 }
 
-/* === グラフ === */
-let chartInstance=null, chartVisible=false;
+let chartVisible=false;
 function toggleChart(){
   chartVisible=!chartVisible;
-  const canvas=document.getElementById('salesChart');
-  const btn=document.getElementById('chartToggleBtn');
+  const canvas=document.getElementById('salesChart'), btn=document.getElementById('chartToggleBtn');
   canvas.style.display=chartVisible?'block':'none';
   btn.textContent=chartVisible?'📊 グラフを非表示':'📊 グラフを表示';
   btn.classList.toggle('open',chartVisible);
   if(chartVisible) drawChart();
 }
 function drawChart(){
-  const srcData=ALL_SALES[activeNendo]||[];
-  const nendo=parseInt(activeNendo);
-  const monthOrder=[];
+  const srcData=ALL_SALES[activeNendo]||[], nendo=parseInt(activeNendo), monthOrder=[];
   for(let m=2;m<=12;m++) monthOrder.push({label:m+'月',key:nendo+'年'+m+'月'});
   monthOrder.push({label:'1月',key:(nendo+1)+'年1月'});
   const labels=[],actuals=[],unitPrices=[];
   monthOrder.forEach(mo=>{
     const md=srcData.filter(r=>r.month===mo.key);
     if(!md.length) return;
-    const tot=md.reduce((s,r)=>s+(r.actual||0),0);
-    const cnt=[...new Set(md.map(r=>r.name))].length;
-    labels.push(mo.label); actuals.push(tot);
-    unitPrices.push(cnt>0?Math.round(tot/cnt):0);
+    const tot=md.reduce((s,r)=>s+(r.actual||0),0), cnt=[...new Set(md.map(r=>r.name))].length;
+    labels.push(mo.label); actuals.push(tot); unitPrices.push(cnt>0?Math.round(tot/cnt):0);
   });
-  const canvas=document.getElementById('salesChart');
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth, H=220;
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,W,H);
-  const pad={top:20,bottom:38,left:60,right:55};
-  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+  const canvas=document.getElementById('salesChart'), dpr=window.devicePixelRatio||1, W=canvas.offsetWidth, H=220;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const pad={top:20,bottom:38,left:60,right:55}, cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
   const n=labels.length; if(!n) return;
-  const maxA=Math.max(...actuals)*1.15||1;
-  const maxP=Math.max(...unitPrices)*1.15||1;
-  const gap=cW/n, barW=gap*0.55;
+  const maxA=Math.max(...actuals)*1.15||1, maxP=Math.max(...unitPrices)*1.15||1, gap=cW/n, barW=gap*0.55;
   for(let i=0;i<=4;i++){
     const y=pad.top+cH*(1-i/4);
-    ctx.strokeStyle='rgba(48,54,61,0.8)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cW,y); ctx.stroke();
-    ctx.fillStyle='#8b949e'; ctx.font='10px sans-serif'; ctx.textAlign='right';
-    ctx.fillText('¥'+(maxA*i/4/10000).toFixed(0)+'万',pad.left-4,y+4);
+    ctx.strokeStyle='rgba(48,54,61,0.8)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cW,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText('¥'+(maxA*i/4/10000).toFixed(0)+'万',pad.left-4,y+4);
   }
   actuals.forEach((v,i)=>{
-    const x=pad.left+gap*i+gap/2-barW/2;
-    const bH=(v/maxA)*cH, y=pad.top+cH-bH;
-    const g=ctx.createLinearGradient(0,y,0,y+bH);
-    g.addColorStop(0,'rgba(232,168,76,0.9)'); g.addColorStop(1,'rgba(232,168,76,0.35)');
-    ctx.fillStyle=g;
-    ctx.beginPath();
-    if(ctx.roundRect) ctx.roundRect(x,y,barW,bH,3); else ctx.rect(x,y,barW,bH);
-    ctx.fill();
+    const x=pad.left+gap*i+gap/2-barW/2, bH=(v/maxA)*cH, y=pad.top+cH-bH;
+    const g=ctx.createLinearGradient(0,y,0,y+bH); g.addColorStop(0,'rgba(232,168,76,0.9)'); g.addColorStop(1,'rgba(232,168,76,0.35)');
+    ctx.fillStyle=g; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,barW,bH,3); else ctx.rect(x,y,barW,bH); ctx.fill();
   });
   ctx.strokeStyle='#3fb950'; ctx.lineWidth=2; ctx.beginPath();
-  unitPrices.forEach((v,i)=>{
-    const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP);
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-  });
-  ctx.stroke();
-  unitPrices.forEach((v,i)=>{
-    const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP);
-    ctx.fillStyle='#3fb950'; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
-  });
+  unitPrices.forEach((v,i)=>{ const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
+  unitPrices.forEach((v,i)=>{ const x=pad.left+gap*i+gap/2, y=pad.top+cH*(1-v/maxP); ctx.fillStyle='#3fb950'; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill(); });
   ctx.fillStyle='#8b949e'; ctx.font='11px sans-serif'; ctx.textAlign='center';
   labels.forEach((l,i)=>{ ctx.fillText(l,pad.left+gap*i+gap/2,H-6); });
   ctx.fillStyle='#3fb950'; ctx.font='10px sans-serif'; ctx.textAlign='left';
-  for(let i=0;i<=4;i++){
-    const y=pad.top+cH*(1-i/4);
-    ctx.fillText('¥'+(maxP*i/4/1000).toFixed(0)+'k',W-pad.right+4,y+4);
-  }
-  const lx=pad.left, ly=H-2;
-  ctx.fillStyle='rgba(232,168,76,0.85)'; ctx.fillRect(lx,ly-8,12,8);
-  ctx.fillStyle='#8b949e'; ctx.textAlign='left'; ctx.font='10px sans-serif';
-  ctx.fillText('売上実績',lx+14,ly);
-  ctx.fillStyle='#3fb950'; ctx.fillRect(lx+75,ly-5,14,2);
-  ctx.fillStyle='#8b949e'; ctx.fillText('月別単価',lx+91,ly);
+  for(let i=0;i<=4;i++){ const y=pad.top+cH*(1-i/4); ctx.fillText('¥'+(maxP*i/4/1000).toFixed(0)+'k',W-pad.right+4,y+4); }
+  ctx.fillStyle='rgba(232,168,76,0.85)'; ctx.fillRect(pad.left,H-10,12,8); ctx.fillStyle='#8b949e'; ctx.textAlign='left'; ctx.font='10px sans-serif'; ctx.fillText('売上実績',pad.left+14,H-2);
+  ctx.fillStyle='#3fb950'; ctx.fillRect(pad.left+75,H-7,14,2); ctx.fillStyle='#8b949e'; ctx.fillText('月別単価',pad.left+91,H-2);
 }
 
 /* === 初期化 === */
-renderCtabs(); renderGrid();
-document.getElementById('startDate').value=new Date().toISOString().split('T')[0];
-buildNendoButtons();
-buildMonthButtons();
+renderCtabs(); renderGrid(); document.getElementById('startDate').value=new Date().toISOString().split('T')[0];
 if(IS_NEW_NENDO) document.getElementById('gradeBanner').classList.add('show');
 </script>
 </body>
