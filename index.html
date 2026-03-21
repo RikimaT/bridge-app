@@ -8,26 +8,17 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Bridge 生徒管理システム</title>
 <script>
-// GASのiframeを全画面に強制スケールするハック
 (function(){
   try {
     if(window.parent && window.parent !== window){
       var iframes = window.parent.document.querySelectorAll('iframe');
-      iframes.forEach(function(f){
-        f.style.width = '100%';
-        f.style.height = '100vh';
-        f.style.border = 'none';
-        f.style.transform = 'none';
-      });
+      iframes.forEach(function(f){ f.style.width = '100%'; f.style.height = '100vh'; f.style.border = 'none'; f.style.transform = 'none'; });
     }
   } catch(e){}
   document.addEventListener('DOMContentLoaded', function(){
-    document.documentElement.style.zoom = '1';
-    document.body.style.zoom = '1';
+    document.documentElement.style.zoom = '1'; document.body.style.zoom = '1';
     var meta = document.querySelector('meta[name=viewport]');
-    if(meta){
-      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no';
-    }
+    if(meta) meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no';
   });
 })();
 </script>
@@ -215,11 +206,15 @@ let ALL_SALES = {};
 let salesLoaded = false;
 let salesLoading = false;
 
+// GASのURL
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
+
 function loadSalesData(callback) {
   if (salesLoading) { setTimeout(() => loadSalesData(callback), 300); return; }
   salesLoading = true;
   const loadingEl = document.getElementById('salesLoading');
   if (loadingEl) loadingEl.style.display = 'block';
+
   fetch(GAS_URL, {
     method: 'POST',
     body: JSON.stringify({ action: 'getSales' })
@@ -231,6 +226,7 @@ function loadSalesData(callback) {
       salesLoaded = true;
       buildNendoButtons(); 
       buildMonthButtons();
+      renderSales();
     }
     salesLoading = false;
     if (loadingEl) loadingEl.style.display = 'none';
@@ -257,7 +253,7 @@ let activeNendo = String(CUR_NENDO);
 let AVAILABLE_NENDOS = [String(CUR_NENDO)];
 
 function buildNendoButtons(){
-  // 6ヶ月先の年度まで表示を許可する
+  // 6ヶ月先の年度まで表示を許可
   const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
   const maxFutureNendo = (maxFuture.getMonth() + 1 >= 2) ? maxFuture.getFullYear() : maxFuture.getFullYear() - 1;
   
@@ -286,18 +282,21 @@ function buildMonthButtons(){
   const nendo = parseInt(activeNendo);
   const months = [];
   
-  // 現在から6ヶ月先までの上限を算出
+  // 現在から6ヶ月先までの上限
   const maxFuture = new Date(CUR_YEAR, CUR_MONTH - 1 + 6, 1);
   const maxY = maxFuture.getFullYear();
   const maxM = maxFuture.getMonth() + 1;
 
   for(let m=2; m<=12; m++){
-    const isFuture = (nendo > maxY) || (nendo === maxY && m > maxM);
-    if(!isFuture) months.push({label:m+'月',key:nendo+'年'+m+'月'});
+    const y = nendo;
+    if(y < maxY || (y === maxY && m <= maxM)) {
+        months.push({label:m+'月',key:y+'年'+m+'月'});
+    }
   }
   const janY = nendo + 1;
-  const isJanFuture = (janY > maxY) || (janY === maxY && 1 > maxM);
-  if(!isJanFuture) months.push({label:'1月',key:janY+'年1月'});
+  if(janY < maxY || (janY === maxY && 1 <= maxM)) {
+      months.push({label:'1月',key:janY+'年1月'});
+  }
 
   let curKey = months.find(m => m.key === activeMonth) ? activeMonth : '';
   if (!curKey) {
@@ -362,9 +361,6 @@ function renderTags(){
 }
 function updateTotal(){ const t=COURSES.filter(c=>selected.has(c.id)).reduce((s,c)=>s+c.price,0); document.getElementById('totalAmt').innerHTML='¥'+t.toLocaleString()+'<span>/ 月</span>'; }
 
-// ★設定済みのGAS URL★
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN7gr3pAEwkqhXMSdL4zHDeSrX_8axHZqo1gwUSGJiAr9IA0EMT4rt7KEtl6djJc1toQ/exec';
-
 function submitData(){
   const name=document.getElementById('name').value.trim(), grade=document.getElementById('grade').value;
   if(!name||!grade){ showToast('氏名と学年は必須です',true); return; }
@@ -394,7 +390,7 @@ function switchTab(t){
   document.querySelectorAll('.main-tab').forEach((el,i)=>{ if(tabs[i]===t) el.classList.add('active'); });
   document.querySelectorAll('.tab-pane').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  if(t==='sales') loadSalesData(renderSales);
+  if(t==='sales') loadSalesData();
   if(t==='manage') loadStudents();
 }
 
@@ -485,7 +481,12 @@ function renderManage() {
   list.innerHTML = students.map(s => {
     const activeEnrolls = s.enrollments ? s.enrollments.filter(e => e.isActive) : [];
     const totalAmount = activeEnrolls.reduce((sum, e) => sum + (e.overrideAmount || 0), 0);
-    const enrollInfo = s.courses || (activeEnrolls.map(e => e.memo || '').filter(Boolean).join('・')) || '—';
+    
+    // ★ここで確実にコース名とメモを表示させるように修正
+    const enrollInfo = activeEnrolls.length > 0 
+      ? activeEnrolls.map(e => e.courseName + (e.memo ? ' ('+e.memo+')' : '')).filter(Boolean).join('・') 
+      : '—';
+
     const statusBadge = s.isActuallyActive
       ? '<span style="font-size:11px;background:rgba(63,185,80,.15);color:var(--success);border-radius:4px;padding:2px 8px;margin-left:8px">在籍</span>'
       : '<span style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);border-radius:4px;padding:2px 8px;margin-left:8px">退会</span>';
