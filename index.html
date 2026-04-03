@@ -147,7 +147,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <button class="tab" onclick="switchTab('mgr')">生徒</button>
   <button class="tab" onclick="switchTab('trial')">体験生</button>
   <button class="tab" onclick="switchTab('sales')">売上</button>
-  <button class="tab" onclick="switchTab('payment');initPaymentSelectors();">入金</button>
+  <button class="tab" onclick="switchTab('payment');initPaymentSelectors();loadPaymentData();">入金</button>
 </div>
 <div class="box">
 
@@ -367,7 +367,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 <script>
 var MONTHS=['2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月','1月'];
-var GAS_URL='https://script.google.com/macros/s/AKfycbzRJdGPE9wkGD7r8yx09OfLjYYOuDNPet6x5qsmYWxzivciEWIUNToJ1ff6ykLoASXeqQ/exec';
+var GAS_URL='https://script.google.com/macros/s/AKfycbzp30OvZ1UOqIm2jPfAgbpwdLGia_Z4UGvAzrdpH3Pco32Ma3w1RJNL49z3JUUnY8Cz/exec'
+var PAYMENT_GAS_URL='https://script.google.com/macros/s/AKfycbzRJdGPE9wkGD7r8yx09OfLjYYOuDNPet6x5qsmYWxzivciEWIUNToJ1ff6ykLoASXeqQ/exec';
 var ALL_STUDENTS=[],ALL_ENROLL=[],ALL_COURSES=[],ALL_SALES={},ALL_TRIALS=[],ALL_TARGETS={};
 var regSel=[],addSel=[],addTargetID='',addTargetName='';
 var salesYear='',salesMonth='',salesMode='single',salesLoading=false,salesChartObj=null;
@@ -1070,7 +1071,7 @@ function loadPaymentData() {
   const month = document.getElementById('pay-month').value;
   const list  = document.getElementById('payment-list');
   list.innerHTML = '<p style="padding:20px;color:var(--muted)">読み込み中...</p>';
-  fetch(GAS_URL, {
+  fetch(PAYMENT_GAS_URL, {
     method:'POST',
     body: JSON.stringify({ action:'getPaymentData', year, month })
   })
@@ -1107,7 +1108,7 @@ function renderPaymentList(data, year, month) {
 }
 
 function savePaymentStatus(studentId, year, month, paid) {
-  fetch(GAS_URL, {
+  fetch(PAYMENT_GAS_URL, {
     method:'POST',
     body: JSON.stringify({ action:'savePaymentStatus', studentId, year, month, paid })
   })
