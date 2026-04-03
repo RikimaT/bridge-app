@@ -619,33 +619,94 @@ function buildDashTrendChart(){
   });
 }
 
-function buildCourseDistChart(){
-  var dist={};
-  ALL_ENROLL.filter(function(e){return e.isActive;}).forEach(function(e){
-    var nm=e.courseName||e.courseID||'その他';
-    var price=e.overridePrice!=null?e.overridePrice:e.standardPrice;
-    if(!dist[nm])dist[nm]=0;dist[nm]+=price;
+function buildCourseDistChart() {
+  const el = document.getElementById('course-dist');
+  if (!el) return;
+
+  // 4カテゴリ定義
+  const CATS     = ['そろばん', '算数', '国語', '塾'];
+  const PATTERNS = [/そろばん/, /算数/, /国語/, /ブリッジ/];
+  const COLORS   = ['#e8a84c', '#3fb950', '#58a6ff', '#f85149'];
+
+  // ALL_ENROLLからカテゴリ別合計を集計
+  const totals = [0, 0, 0, 0];
+  ALL_ENROLL.filter(e => e.isActive).forEach(e => {
+    const price = e.overridePrice != null ? e.overridePrice : e.standardPrice;
+    if (!price) return;
+    for (let i = 0; i < PATTERNS.length; i++) {
+      if (PATTERNS[i].test(e.courseName || '')) { totals[i] += price; break; }
+    }
   });
-  var entries=Object.entries(dist).sort(function(a,b){return b[1]-a[1];});
-  var maxVal=entries.length?entries[0][1]:1;
-  var el=document.getElementById('course-dist');
-  if(!el)return;
-  if(!entries.length){el.innerHTML='<div class="empty" style="padding:8px;">データなし</div>';return;}
-  el.innerHTML=entries.map(function(e){
-    var pct=Math.round(e[1]/maxVal*100);
-    return '<div class="course-bar-row"><div class="course-bar-label">'+esc(e[0])+'</div><div class="course-bar-track"><div class="course-bar-fill" style="width:'+pct+'%"></div></div><div class="course-bar-val">¥'+e[1].toLocaleString()+'</div></div>';
-  }).join('');
-}
 
-/* ========== TRIALS ========== */
-async function loadTrials(){
-  try{
-    var r=await gas('getTrials');
-    if(r.status==='ok') ALL_TRIALS=r.trials||[];
-    renderTrials();
-  }catch(e){ALL_TRIALS=[];renderTrials();}
-}
+  const grand = totals.reduce((s, v) => s + v, 0);
+  const maxV  = Math.max(...totals, 1);
 
+  // HTML描画：左にドーナツ、右にカテゴリバー
+  el.innerHTML = `
+    <p style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">コース別月額構成</p>
+    <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+      <div style="position:relative;flex-shrink:0;">
+        <canvas id="cat-donut" width="150" height="150"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+          <div style="font-size:.65rem;color:var(--muted);">合計</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--text);">¥${grand.toLocaleString()}</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:160px;">
+        ${CATS.map((cat, i) => {
+          const pct = grand > 0 ? Math.round(totals[i] / grand * 100) : 0;
+          const bar = Math.round(totals[i] / maxV * 100);
+          return `<div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+              <span style="font-weight:600;color:${COLORS[i]};font-size:.9rem;">${cat}</span>
+              <span style="font-size:.85rem;">¥${totals[i].toLocaleString()}
+                <span style="color:${COLORS[i]};font-size:.8rem;margin-left:4px;">(${pct}%)</span>
+              </span>
+            </div>
+            <div style="background:rgba(255,255,255,0.07);border-radius:6px;height:9px;overflow:hidden;">
+              <div style="background:${COLORS[i]};border-radius:6px;height:9px;width:${bar}%;transition:width .5s;"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // Chart.jsでドーナツチャートを描画
+  const ctx = document.getElementById('cat-donut');
+  if (ctx && window.Chart) {
+    if (window._catDonutChart) { window._catDonutChart.destroy(); }
+    window._catDonutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: CATS,
+        datasets: [{
+          data: totals,
+          backgroundColor: COLORS,
+          borderColor: '#0d1117',
+          borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: false,
+        animation: { duration: 600 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const v = ctx.parsed;
+                const p = grand > 0 ? Math.round(v / grand * 100) : 0;
+                return ' ¥' + v.toLocaleString() + ' (' + p + '%)';
+              }
+            }
+          }
+        },
+        cutout: '60%'
+      }
+    });
+  }
+}
 function filterTrials(btn){
   trialFilter=btn.dataset.status;
   document.querySelectorAll('#trial-filter-tabs .ctab').forEach(function(t){t.classList.remove('active');});
