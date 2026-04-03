@@ -144,10 +144,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <div class="tabs">
   <button class="tab active" onclick="switchTab('dash')">概況</button>
   <button class="tab" onclick="switchTab('reg')">登録</button>
-  <button class="tab" onclick="switchTab('mgr')">生徒</button>
+  <button class="tab" onclick="switchTab('mgr');loadPaymentForCurrentMonth()">生徒</button>
   <button class="tab" onclick="switchTab('trial')">体験生</button>
   <button class="tab" onclick="switchTab('sales')">売上</button>
-  <button class="tab" onclick="switchTab('payment');initPaymentSelectors();loadPaymentData();">入金</button>
 </div>
 <div class="box">
 
@@ -338,31 +337,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 </div>
 
 
-<!-- ====== 入金 ====== -->
-<div id="pane-payment" class="pane">
-  <div class="year-row" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-    <select id="pay-year" class="sel" style="padding:6px 10px;"></select>
-    <span style="color:var(--muted)">年</span>
-    <select id="pay-month" class="sel" style="padding:6px 10px;"></select>
-    <span style="color:var(--muted)">月</span>
-    <button class="btn" onclick="loadPaymentData()" style="padding:6px 16px;">表示</button>
-  </div>
-  <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-    <div class="kpi-card" style="flex:1;min-width:140px;">
-      <div class="kpi-label">売上合計</div>
-      <div class="kpi-value" id="pay-total" style="font-size:1.4rem;">--</div>
-    </div>
-    <div class="kpi-card" style="flex:1;min-width:140px;">
-      <div class="kpi-label">入金済み</div>
-      <div class="kpi-value" id="pay-paid" style="font-size:1.4rem;color:var(--ok);">--</div>
-    </div>
-    <div class="kpi-card" style="flex:1;min-width:140px;">
-      <div class="kpi-label">未収金</div>
-      <div class="kpi-value" id="pay-unpaid" style="font-size:1.4rem;color:var(--ng);">--</div>
-    </div>
-  </div>
-  <div id="payment-list" style="border-radius:8px;overflow:hidden;"></div>
-</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -557,7 +531,7 @@ function renderMgr(){
     h+='<div class="ltv-row"><span>在籍 <span class="ltv-val">'+months+'ヶ月</span></span><span>累計 <span class="ltv-val">¥'+ltv.toLocaleString()+'</span></span>'+(lineInfo?'<span>'+lineInfo+'</span>':'')+(phoneInfo?'<span>'+phoneInfo+'</span>':'')+'</div>';
     h+='<div style="margin-top:4px;">'+(clist||'<span style="font-size:12px;color:var(--muted);">コースなし</span>')+'</div></div>';
     h+='<div style="text-align:right;flex-shrink:0;"><span class="badge badge-ok">在籍</span><br>';
-    h+='<span class="stotal" style="margin-top:6px;display:block;">¥'+monthly.toLocaleString()+'/月</span></div></div>';
+    h+='<span class="stotal" style="margin-top:6px;display:block;">¥'+monthly.toLocaleString()+'/月</span></div>'+'<label onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 10px;cursor:pointer;border-left:1px solid var(--border);min-width:52px;">'+'<input type="checkbox" '+(window._payData&&window._payData[s.studentID]?'checked':'')+' data-sid="'+esc(s.studentID)+'" onchange="togglePayment(this.dataset.sid,this.checked)" style="width:20px;height:20px;accent-color:var(--accent);cursor:pointer;">'+'<span style="font-size:10px;margin-top:2px;color:var(--muted);">入金</span></label></div>';
     h+='<div class="scard-detail" id="sd-'+esc(s.studentID)+'">'+cr;
     h+='<div class="action-row">';
     h+='<button class="btn btn-ghost" style="flex:1;" data-sid="'+esc(s.studentID)+'" data-name="'+esc(s.name)+'" onclick="openAddModalBtn(this)">+ コース追加</button>';
@@ -1106,76 +1080,23 @@ function showToast(msg,type){
   clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},3500);
 }
 
-// ====== 入金タブ ======
-function initPaymentSelectors() {
-  const yearSel = document.getElementById('pay-year');
-  const monthSel = document.getElementById('pay-month');
-  if (!yearSel || yearSel.options.length > 0) return;
-  const now = new Date();
-  const curY = now.getFullYear();
-  for (let y = curY - 1; y <= curY + 1; y++) {
-    const opt = document.createElement('option');
-    opt.value = y; opt.textContent = y + '年';
-    if (y === curY) opt.selected = true;
-    yearSel.appendChild(opt);
-  }
-  for (let m = 1; m <= 12; m++) {
-    const opt = document.createElement('option');
-    opt.value = m; opt.textContent = m + '月';
-    if (m === now.getMonth() + 1) opt.selected = true;
-    monthSel.appendChild(opt);
-  }
+function loadPaymentForCurrentMonth(){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1;
+  window._payData={};
+  fetch(PAYMENT_GAS_URL+'?action=getPaymentData&year='+y+'&month='+m)
+    .then(r=>r.json()).then(data=>{
+      window._payData={};
+      (data.payments||[]).forEach(p=>{window._payData[p.studentID]=p.paid;});
+      renderMgr();
+    }).catch(e=>console.error('pay load',e));
 }
-
-function loadPaymentData() {
-  const year  = document.getElementById('pay-year').value;
-  const month = document.getElementById('pay-month').value;
-  const list  = document.getElementById('payment-list');
-  list.innerHTML = '<p style="padding:20px;color:var(--muted)">読み込み中...</p>';
-  fetch(PAYMENT_GAS_URL, {
-    method:'POST',
-    body: JSON.stringify({ action:'getPaymentData', year, month })
-  })
-  .then(r => r.json())
-  .then(data => renderPaymentList(data, year, month))
-  .catch(e => { list.innerHTML = '<p style="padding:20px;color:var(--ng)">エラー: ' + e.message + '</p>'; });
-}
-
-function renderPaymentList(data, year, month) {
-  document.getElementById('pay-total').textContent  = '¥' + ((data.totalAmount  || 0)).toLocaleString();
-  document.getElementById('pay-paid').textContent   = '¥' + ((data.paidAmount   || 0)).toLocaleString();
-  document.getElementById('pay-unpaid').textContent = '¥' + ((data.unpaidAmount || 0)).toLocaleString();
-  const students = data.students || [];
-  const list = document.getElementById('payment-list');
-  if (!students.length) {
-    list.innerHTML = '<p style="padding:20px;color:var(--muted)">データがありません</p>';
-    return;
-  }
-  list.innerHTML = students.map((s, i) => `
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;
-      background:${i%2===0?'rgba(255,255,255,0.03)':'transparent'};
-      border-bottom:1px solid rgba(255,255,255,0.07);">
-      <input type="checkbox" ${s.paid?'checked':''} 
-        onchange="savePaymentStatus('${s.id}','${year}','${month}',this.checked)"
-        style="width:18px;height:18px;cursor:pointer;accent-color:var(--ok);">
-      <span style="flex:1;font-weight:600;">${s.name}</span>
-      <span style="color:var(--muted);font-size:0.85rem;">${s.course||''}</span>
-      <span style="font-weight:700;">¥${(s.amount||0).toLocaleString()}</span>
-      <span style="font-size:0.8rem;padding:2px 8px;border-radius:4px;
-        background:${s.paid?'rgba(63,185,80,0.15)':'rgba(248,81,73,0.15)'};
-        color:${s.paid?'var(--ok)':'var(--ng)'};">${s.paid?'入金済':'未収'}</span>
-    </div>
-  `).join('');
-}
-
-function savePaymentStatus(studentId, year, month, paid) {
-  fetch(PAYMENT_GAS_URL, {
-    method:'POST',
-    body: JSON.stringify({ action:'savePaymentStatus', studentId, year, month, paid })
-  })
-  .then(r => r.json())
-  .then(d => { if (d.result==='ok') loadPaymentData(); else console.error('savePaymentStatus:', d); })
-  .catch(e => console.error('savePaymentStatus error:', e));
+function togglePayment(sid,checked){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1;
+  if(!window._payData)window._payData={};
+  window._payData[sid]=checked;
+  fetch(PAYMENT_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'savePaymentStatus',studentID:sid,year:y,month:m,paid:checked})
+  }).catch(e=>console.error('pay save',e));
 }
 </script>
 </body>
