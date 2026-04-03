@@ -147,6 +147,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <button class="tab" onclick="switchTab('mgr')">生徒</button>
   <button class="tab" onclick="switchTab('trial')">体験生</button>
   <button class="tab" onclick="switchTab('sales')">売上</button>
+  <button class="tab" onclick="switchTab('payment');initPaymentSelectors();">入金</button>
 </div>
 <div class="box">
 
@@ -336,11 +337,37 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </div>
 </div>
 
+
+<!-- ====== 入金 ====== -->
+<div id="pane-payment" class="pane">
+  <div class="year-row" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <select id="pay-year" class="sel" style="padding:6px 10px;"></select>
+    <span style="color:var(--muted)">年</span>
+    <select id="pay-month" class="sel" style="padding:6px 10px;"></select>
+    <span style="color:var(--muted)">月</span>
+    <button class="btn" onclick="loadPaymentData()" style="padding:6px 16px;">表示</button>
+  </div>
+  <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+    <div class="kpi-card" style="flex:1;min-width:140px;">
+      <div class="kpi-label">売上合計</div>
+      <div class="kpi-value" id="pay-total" style="font-size:1.4rem;">--</div>
+    </div>
+    <div class="kpi-card" style="flex:1;min-width:140px;">
+      <div class="kpi-label">入金済み</div>
+      <div class="kpi-value" id="pay-paid" style="font-size:1.4rem;color:var(--ok);">--</div>
+    </div>
+    <div class="kpi-card" style="flex:1;min-width:140px;">
+      <div class="kpi-label">未収金</div>
+      <div class="kpi-value" id="pay-unpaid" style="font-size:1.4rem;color:var(--ng);">--</div>
+    </div>
+  </div>
+  <div id="payment-list" style="border-radius:8px;overflow:hidden;"></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
 var MONTHS=['2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月','1月'];
-var GAS_URL='https://script.google.com/macros/s/AKfycbzp30OvZ1UOqIm2jPfAgbpwdLGia_Z4UGvAzrdpH3Pco32Ma3w1RJNL49z3JUUnY8Cz/exec';
+var GAS_URL='https://script.google.com/macros/s/AKfycbzRJdGPE9wkGD7r8yx09OfLjYYOuDNPet6x5qsmYWxzivciEWIUNToJ1ff6ykLoASXeqQ/exec';
 var ALL_STUDENTS=[],ALL_ENROLL=[],ALL_COURSES=[],ALL_SALES={},ALL_TRIALS=[],ALL_TARGETS={};
 var regSel=[],addSel=[],addTargetID='',addTargetName='';
 var salesYear='',salesMonth='',salesMode='single',salesLoading=false,salesChartObj=null;
@@ -1015,6 +1042,78 @@ function showToast(msg,type){
   var el=document.getElementById('toast');
   el.textContent=msg;el.className='toast '+(type||'')+' show';
   clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},3500);
+}
+
+// ====== 入金タブ ======
+function initPaymentSelectors() {
+  const yearSel = document.getElementById('pay-year');
+  const monthSel = document.getElementById('pay-month');
+  if (!yearSel || yearSel.options.length > 0) return;
+  const now = new Date();
+  const curY = now.getFullYear();
+  for (let y = curY - 1; y <= curY + 1; y++) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '年';
+    if (y === curY) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+  for (let m = 1; m <= 12; m++) {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m + '月';
+    if (m === now.getMonth() + 1) opt.selected = true;
+    monthSel.appendChild(opt);
+  }
+}
+
+function loadPaymentData() {
+  const year  = document.getElementById('pay-year').value;
+  const month = document.getElementById('pay-month').value;
+  const list  = document.getElementById('payment-list');
+  list.innerHTML = '<p style="padding:20px;color:var(--muted)">読み込み中...</p>';
+  fetch(GAS_URL, {
+    method:'POST',
+    body: JSON.stringify({ action:'getPaymentData', year, month })
+  })
+  .then(r => r.json())
+  .then(data => renderPaymentList(data, year, month))
+  .catch(e => { list.innerHTML = '<p style="padding:20px;color:var(--ng)">エラー: ' + e.message + '</p>'; });
+}
+
+function renderPaymentList(data, year, month) {
+  document.getElementById('pay-total').textContent  = '¥' + ((data.totalAmount  || 0)).toLocaleString();
+  document.getElementById('pay-paid').textContent   = '¥' + ((data.paidAmount   || 0)).toLocaleString();
+  document.getElementById('pay-unpaid').textContent = '¥' + ((data.unpaidAmount || 0)).toLocaleString();
+  const students = data.students || [];
+  const list = document.getElementById('payment-list');
+  if (!students.length) {
+    list.innerHTML = '<p style="padding:20px;color:var(--muted)">データがありません</p>';
+    return;
+  }
+  list.innerHTML = students.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;
+      background:${i%2===0?'rgba(255,255,255,0.03)':'transparent'};
+      border-bottom:1px solid rgba(255,255,255,0.07);">
+      <input type="checkbox" ${s.paid?'checked':''} 
+        onchange="savePaymentStatus('${s.id}','${year}','${month}',this.checked)"
+        style="width:18px;height:18px;cursor:pointer;accent-color:var(--ok);">
+      <span style="flex:1;font-weight:600;">${s.name}</span>
+      <span style="color:var(--muted);font-size:0.85rem;">${s.course||''}</span>
+      <span style="font-weight:700;">¥${(s.amount||0).toLocaleString()}</span>
+      <span style="font-size:0.8rem;padding:2px 8px;border-radius:4px;
+        background:${s.paid?'rgba(63,185,80,0.15)':'rgba(248,81,73,0.15)'};
+        color:${s.paid?'var(--ok)':'var(--ng)'};">${s.paid?'入金済':'未収'}</span>
+    </div>
+  `).join('');
+}
+
+function savePaymentStatus(studentId, year, month, paid) {
+  fetch(GAS_URL, {
+    method:'POST',
+    body: JSON.stringify({ action:'savePaymentStatus', studentId, year, month, paid })
+  })
+  .then(r => r.json())
+  .then(d => { if (d.result==='ok') loadPaymentData(); else console.error('savePaymentStatus:', d); })
+  .catch(e => console.error('savePaymentStatus error:', e));
 }
 </script>
 </body>
