@@ -195,6 +195,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div style="margin-bottom:14px;">
     <input type="search" id="mgr-search" placeholder="氏名で検索..." oninput="renderMgr()">
   </div>
+  <div id="pay-month-nav" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;"><button onclick="changePayMonth(-1)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 12px;font-size:16px;cursor:pointer;">◀</button><span id="pay-month-label" style="font-size:14px;font-weight:600;color:var(--accent);min-width:80px;text-align:center;"></span><button onclick="changePayMonth(1)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 12px;font-size:16px;cursor:pointer;">▶</button></div>
   <div id="mgr-list"><div class="loading">読込中...</div></div>
 </div>
 
@@ -1081,35 +1082,45 @@ function showToast(msg,type){
 }
 
 function _payKey(y,m){return 'bridge_pay_'+y+'_'+m;}
+function _initPayMonth(){
+  if(!window._payYear){var now=new Date();window._payYear=now.getFullYear();window._payMonth=now.getMonth()+1;}
+}
+function _updatePayLabel(){
+  var el=document.getElementById('pay-month-label');
+  if(el) el.textContent=window._payYear+'年'+window._payMonth+'月';
+}
+function changePayMonth(delta){
+  _initPayMonth();
+  window._payMonth+=delta;
+  if(window._payMonth>12){window._payMonth=1;window._payYear++;}
+  if(window._payMonth<1){window._payMonth=12;window._payYear--;}
+  _updatePayLabel();
+  loadPaymentForCurrentMonth();
+}
 function loadPaymentForCurrentMonth(){
-  const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1;
-  // 1) localStorageから即時読み込み → 瞬時に画面反映
-  try{
-    const stored=localStorage.getItem(_payKey(y,m));
-    window._payData=stored?JSON.parse(stored):{};
-  }catch(e){ window._payData={}; }
+  _initPayMonth();
+  var y=window._payYear,m=window._payMonth;
+  _updatePayLabel();
+  try{var stored=localStorage.getItem(_payKey(y,m));window._payData=stored?JSON.parse(stored):{};}catch(e){window._payData={};}
   renderMgr();
-  // 2) GASと非同期同期（バックグラウンド）
   fetch(PAYMENT_GAS_URL+'?action=getPaymentData&year='+y+'&month='+m)
-    .then(r=>r.json()).then(data=>{
-      const gasData={};
-      (data.payments||[]).forEach(p=>{gasData[p.studentID]=p.paid;});
-      // マージ：GASデータを優先、ローカルにないキーは保持
+    .then(function(r){return r.json();}).then(function(data){
+      var gasData={};
+      (data.payments||[]).forEach(function(p){gasData[p.studentID]=p.paid;});
       window._payData=Object.assign({},window._payData,gasData);
       try{localStorage.setItem(_payKey(y,m),JSON.stringify(window._payData));}catch(e){}
       renderMgr();
-    }).catch(e=>console.error('pay load',e));
+    }).catch(function(e){console.error('pay load',e);});
 }
 function togglePayment(sid,checked){
-  const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1;
+  _initPayMonth();
+  var y=window._payYear,m=window._payMonth;
   if(!window._payData)window._payData={};
   window._payData[sid]=checked;
-  // localStorageに即時保存（確実な永続化）
   try{localStorage.setItem(_payKey(y,m),JSON.stringify(window._payData));}catch(e){}
-  // GASにも非同期保存
   fetch(PAYMENT_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'savePaymentStatus',studentID:sid,year:y,month:m,paid:checked})
-  }).catch(e=>console.error('pay save',e));
+  }).catch(function(e){console.error('pay save',e);});
 }
 </script>
 </body>
