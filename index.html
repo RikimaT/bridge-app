@@ -1080,13 +1080,23 @@ function showToast(msg,type){
   clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},3500);
 }
 
+function _payKey(y,m){return 'bridge_pay_'+y+'_'+m;}
 function loadPaymentForCurrentMonth(){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1;
-  window._payData={};
+  // 1) localStorageから即時読み込み → 瞬時に画面反映
+  try{
+    const stored=localStorage.getItem(_payKey(y,m));
+    window._payData=stored?JSON.parse(stored):{};
+  }catch(e){ window._payData={}; }
+  renderMgr();
+  // 2) GASと非同期同期（バックグラウンド）
   fetch(PAYMENT_GAS_URL+'?action=getPaymentData&year='+y+'&month='+m)
     .then(r=>r.json()).then(data=>{
-      window._payData={};
-      (data.payments||[]).forEach(p=>{window._payData[p.studentID]=p.paid;});
+      const gasData={};
+      (data.payments||[]).forEach(p=>{gasData[p.studentID]=p.paid;});
+      // マージ：GASデータを優先、ローカルにないキーは保持
+      window._payData=Object.assign({},window._payData,gasData);
+      try{localStorage.setItem(_payKey(y,m),JSON.stringify(window._payData));}catch(e){}
       renderMgr();
     }).catch(e=>console.error('pay load',e));
 }
@@ -1094,6 +1104,9 @@ function togglePayment(sid,checked){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1;
   if(!window._payData)window._payData={};
   window._payData[sid]=checked;
+  // localStorageに即時保存（確実な永続化）
+  try{localStorage.setItem(_payKey(y,m),JSON.stringify(window._payData));}catch(e){}
+  // GASにも非同期保存
   fetch(PAYMENT_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'savePaymentStatus',studentID:sid,year:y,month:m,paid:checked})
   }).catch(e=>console.error('pay save',e));
