@@ -566,6 +566,7 @@ function renderMgr(){
     h+='<div class="action-row">';
     h+='<button class="btn btn-ghost" style="flex:1;" data-sid="'+esc(s.studentID)+'" data-name="'+esc(s.name)+'" onclick="openAddModalBtn(this)">+ コース追加</button>';
     h+='<button class="btn btn-danger" style="flex:1;" data-sid="'+esc(s.studentID)+'" data-name="'+esc(s.name)+'" onclick="doWithdrawBtn(this)">退会処理</button>';
+    h+='<button class="btn btn-info" onclick="openSiblingModal(\''+esc(s.name)+'\')">兄弟設定</button>';
     h+='</div></div></div>';
   });
   el.innerHTML=h;
