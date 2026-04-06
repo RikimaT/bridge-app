@@ -134,29 +134,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .toast.err{border-color:var(--ng);color:var(--ng);}
 .empty{text-align:center;padding:32px;color:var(--muted);font-size:14px;}
 .loading{text-align:center;padding:32px;color:var(--muted);}
-
-/* 兄弟グループ管理 */
-#sibling-section{margin:8px 0 12px;padding:10px 12px;background:#f0f7ff;border-radius:8px;border:1px solid #d0e8ff}
-#sibling-section h3{margin:0 0 8px;font-size:14px;color:#1a5276}
-.sibling-group{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;margin:4px 0;background:white;border-radius:6px;border:1px solid #bee3f8;font-size:13px}
-.sibling-group-name{font-weight:bold;color:#2874a6}
-.sibling-members{color:#555;margin-left:8px}
-.sibling-actions{display:flex;gap:6px}
-.btn-sibling-edit,.btn-sibling-delete{padding:3px 8px;border-radius:4px;border:none;cursor:pointer;font-size:12px}
-.btn-sibling-edit{background:#3498db;color:white}
-.btn-sibling-delete{background:#e74c3c;color:white}
-#btn-add-sibling{margin-top:8px;padding:6px 12px;background:#27ae60;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px}
-#sibling-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
-#sibling-modal-overlay.active{display:flex}
-#sibling-modal{background:white;border-radius:10px;padding:20px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto}
-#sibling-modal h3{margin:0 0 12px;font-size:16px}
-.sibling-member-select{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-.sibling-member-select label{display:flex;align-items:center;gap:8px;font-size:14px}
-#sibling-group-name-input{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;margin-bottom:10px;box-sizing:border-box}
-.sibling-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-.sibling-modal-btns button{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:14px}
-#btn-sibling-save{background:#27ae60;color:white}
-#btn-sibling-cancel{background:#95a5a6;color:white}
 </style>
 </head>
 <body>
@@ -219,11 +196,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <input type="search" id="mgr-search" placeholder="氏名で検索..." oninput="renderMgr()">
   </div>
   <div id="pay-month-nav" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;"><button onclick="changePayMonth(-1)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 12px;font-size:16px;cursor:pointer;">◀</button><span id="pay-month-label" style="font-size:14px;font-weight:600;color:var(--accent);min-width:80px;text-align:center;"></span><button onclick="changePayMonth(1)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 12px;font-size:16px;cursor:pointer;">▶</button></div>
-  <div id="sibling-section">
-    <h3>&#x1F46A; 兄弟グループ</h3>
-    <div id="sibling-list"><div class="loading">読み込み中...</div></div>
-    <button id="btn-add-sibling" onclick="openSiblingModal(null)">＋ 兄弟グループ追加</button>
-  </div>
   <div id="mgr-list"><div class="loading">読込中...</div></div>
 </div>
 
@@ -388,7 +360,6 @@ document.addEventListener('DOMContentLoaded',function(){
   loadSchools();
   loadCourses();
   loadStudents();
-  loadSiblingGroups();
   filterTrials();
 });
 
@@ -566,7 +537,6 @@ function renderMgr(){
     h+='<div class="action-row">';
     h+='<button class="btn btn-ghost" style="flex:1;" data-sid="'+esc(s.studentID)+'" data-name="'+esc(s.name)+'" onclick="openAddModalBtn(this)">+ コース追加</button>';
     h+='<button class="btn btn-danger" style="flex:1;" data-sid="'+esc(s.studentID)+'" data-name="'+esc(s.name)+'" onclick="doWithdrawBtn(this)">退会処理</button>';
-    h+='<button class="btn btn-info" onclick="openSiblingModal(\''+esc(s.name)+'\')">兄弟設定</button>';
     h+='</div></div></div>';
   });
   el.innerHTML=h;
@@ -1153,108 +1123,6 @@ function togglePayment(sid,checked){
   }).catch(function(e){console.error('pay save',e);});
 }
 
-// ===== 兄弟グループ管理 =====
-var _siblingEditRow = null;
-function loadSiblingGroups() {
-  var el = document.getElementById("sibling-list");
-  if (!el) return;
-  el.innerHTML = "<div style='font-size:13px;color:#888;'>読み込み中...</div>";
-  gas('getHouseholds').then(function(res) {
-    var data = Array.isArray(res) ? res : (res && res.data ? res.data : []);
-    if (res && res.status === "error") { el.innerHTML = "<div style='color:red;font-size:13px;'>読み込み失敗</div>"; return; }
-    renderSiblingGroups(data);
-  }).catch(function(){ el.innerHTML = "<div style='color:red;font-size:13px;'>通信エラー</div>"; });
-}
-function renderSiblingGroups(groups) {
-  var el = document.getElementById("sibling-list");
-  if (!el) return;
-  if (!groups || groups.length === 0) { el.innerHTML = "<div style='font-size:13px;color:#888;'>グループなし</div>"; return; }
-  el.innerHTML = groups.map(function(g, i) {
-    return "<div class='sibling-group'>"
-      + "<span><span class='sibling-group-name'>" + _sEsc(g.groupName || "グループ"+(i+1)) + "</span>"
-      + "<span class='sibling-members'>（" + _sEsc(g.members || "") + "）</span></span>"
-      + "<span class='sibling-actions'>"
-      + "<button class='btn-sibling-edit' onclick='openSiblingModal(" + g.rowIndex + ")'>編集</button>"
-      + "<button class='btn-sibling-delete' onclick='deleteSiblingGroup(" + g.rowIndex + ")'>削除</button>"
-      + "</span></div>";
-  }).join("");
-}
-function _sEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function openSiblingModal(rowIndex) {
-  _siblingEditRow = rowIndex || null;
-  gas('getStudentNames').then(function(res) {
-    var names = Array.isArray(res) ? res : (res && res.data ? res.data : []);
-    var container = document.getElementById("sibling-member-list");
-    container.innerHTML = names.map(function(n){
-      return "<label><input type='checkbox' value='" + _sEsc(n) + "'> " + _sEsc(n) + "</label>";
-    }).join("");
-    document.getElementById("sibling-group-name-input").value = "";
-    document.getElementById("sibling-modal-title").textContent = rowIndex ? "兄弟グループ編集" : "兄弟グループ追加";
-    if (rowIndex) {
-      gas('getHouseholds').then(function(r2) {
-        var gs = Array.isArray(r2) ? r2 : (r2 && r2.data ? r2.data : []);
-        var g = gs.find(function(x){return x.rowIndex == rowIndex;});
-        if (g) {
-          document.getElementById("sibling-group-name-input").value = g.groupName || "";
-          var mems = (g.members || "").split("、");
-          container.querySelectorAll("input[type=checkbox]").forEach(function(cb){
-            if (mems.indexOf(cb.value) >= 0) cb.checked = true;
-          });
-        }
-      });
-    }
-    document.getElementById("sibling-modal-overlay").classList.add("active");
-  });
-}
-function closeSiblingModal(){
-  document.getElementById("sibling-modal-overlay").classList.remove("active");
-  _siblingEditRow = null;
-}
-function saveSiblingGroup(){
-  var gname = document.getElementById("sibling-group-name-input").value.trim();
-  var checked = Array.from(document.querySelectorAll("#sibling-member-list input:checked")).map(function(cb){return cb.value;});
-  if (checked.length < 2){alert("2名以上選択してください");return;}
-  var doSave = function(){
-    gas('saveHousehold', {groupName:gname,members:checked.join('、')}).then(function(res){
-      if (!res || res.status==="error"){alert("保存失敗: "+(res&&res.message||""));return;}
-      closeSiblingModal(); loadSiblingGroups();
-    });
-  };
-  if (_siblingEditRow){
-    gas('deleteHousehold', {rowIndex:_siblingEditRow}).then(function(){doSave();});
-  } else { doSave(); }
-}
-function deleteSiblingGroup(rowIndex){
-  if (!confirm("このグループを削除しますか？")) return;
-  gas('deleteHousehold', {rowIndex:rowIndex}).then(function(res){
-    if (!res || res.status==="error"){alert("削除失敗");return;}
-    loadSiblingGroups();
-  });
-}
-// switchTab patch
-(function(){
-  var _orig = window.switchTab;
-  if (typeof _orig === "function"){
-    window.switchTab = function(id){_orig.call(this,id);if(id==="mgr")setTimeout(loadSiblingGroups,100);};
-  }
-  if (document.getElementById("pane-mgr") && document.getElementById("pane-mgr").classList.contains("active")){
-    setTimeout(loadSiblingGroups,500);
-  }
-})();
 </script>
-
-<div id="sibling-modal-overlay">
-  <div id="sibling-modal">
-    <h3 id="sibling-modal-title">兄弟グループ設定</h3>
-    <label style="font-size:13px;display:block;margin-bottom:4px;">グループ名（任意）</label>
-    <input id="sibling-group-name-input" type="text" placeholder="例：田中家">
-    <div style="font-size:13px;margin-bottom:6px;">メンバーを選択</div>
-    <div id="sibling-member-list" class="sibling-member-select"></div>
-    <div class="sibling-modal-btns">
-      <button id="btn-sibling-cancel" onclick="closeSiblingModal()">キャンセル</button>
-      <button id="btn-sibling-save" onclick="saveSiblingGroup()">保存</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
