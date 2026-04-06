@@ -1157,11 +1157,11 @@ function loadSiblingGroups() {
   var el = document.getElementById("sibling-list");
   if (!el) return;
   el.innerHTML = "<div style='font-size:13px;color:#888;'>読み込み中...</div>";
-  gas({action:"getHouseholds"}, function(res) {
+  gas({action:"getHouseholds"}).then(function(res) {
     var data = Array.isArray(res) ? res : (res && res.data ? res.data : []);
     if (res && res.status === "error") { el.innerHTML = "<div style='color:red;font-size:13px;'>読み込み失敗</div>"; return; }
     renderSiblingGroups(data);
-  });
+  }).catch(function(){ el.innerHTML = "<div style='color:red;font-size:13px;'>通信エラー</div>"; });
 }
 function renderSiblingGroups(groups) {
   var el = document.getElementById("sibling-list");
@@ -1180,7 +1180,7 @@ function renderSiblingGroups(groups) {
 function _sEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function openSiblingModal(rowIndex) {
   _siblingEditRow = rowIndex || null;
-  gas({action:"getStudentNames"}, function(res) {
+  gas({action:"getStudentNames"}).then(function(res) {
     var names = Array.isArray(res) ? res : (res && res.data ? res.data : []);
     var container = document.getElementById("sibling-member-list");
     container.innerHTML = names.map(function(n){
@@ -1189,7 +1189,7 @@ function openSiblingModal(rowIndex) {
     document.getElementById("sibling-group-name-input").value = "";
     document.getElementById("sibling-modal-title").textContent = rowIndex ? "兄弟グループ編集" : "兄弟グループ追加";
     if (rowIndex) {
-      gas({action:"getHouseholds"}, function(r2) {
+      gas({action:"getHouseholds"}).then(function(r2) {
         var gs = Array.isArray(r2) ? r2 : (r2 && r2.data ? r2.data : []);
         var g = gs.find(function(x){return x.rowIndex == rowIndex;});
         if (g) {
@@ -1213,23 +1213,23 @@ function saveSiblingGroup(){
   var checked = Array.from(document.querySelectorAll("#sibling-member-list input:checked")).map(function(cb){return cb.value;});
   if (checked.length < 2){alert("2名以上選択してください");return;}
   var doSave = function(){
-    gas({action:"saveHousehold",groupName:gname,members:checked.join("、")},function(res){
+    gas({action:"saveHousehold",groupName:gname,members:checked.join("、")}).then(function(res){
       if (!res || res.status==="error"){alert("保存失敗: "+(res&&res.message||""));return;}
       closeSiblingModal(); loadSiblingGroups();
     });
   };
   if (_siblingEditRow){
-    gas({action:"deleteHousehold",rowIndex:_siblingEditRow},function(){doSave();});
+    gas({action:"deleteHousehold",rowIndex:_siblingEditRow}).then(function(){doSave();});
   } else { doSave(); }
 }
 function deleteSiblingGroup(rowIndex){
   if (!confirm("このグループを削除しますか？")) return;
-  gas({action:"deleteHousehold",rowIndex:rowIndex},function(res){
+  gas({action:"deleteHousehold",rowIndex:rowIndex}).then(function(res){
     if (!res || res.status==="error"){alert("削除失敗");return;}
     loadSiblingGroups();
   });
 }
-// switchTab patch: 生徒タブ切り替え時に兄弟グループ読み込み
+// switchTab patch
 (function(){
   var _orig = window.switchTab;
   if (typeof _orig === "function"){
