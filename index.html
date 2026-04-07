@@ -506,13 +506,13 @@ function renderMgr(){
   var h='';
   list.forEach(function(s){
     var enrolls=ALL_ENROLL.filter(function(e){return e.studentID===s.studentID&&e.isActive;});
-    var monthly=enrolls.reduce(function(sum,e){return sum+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+    var monthly=enrolls.reduce(function(sum,e){return sum+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
     var months=calcMonths(s.joinDate);
     var ltv=monthly*months;
     var cr='';
     if(enrolls.length){
       enrolls.forEach(function(e){
-        var price=e.overridePrice!=null?e.overridePrice:e.standardPrice;
+        var price=e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0;
         var ov=e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:5px;">上書</span>':'';
         cr+='<div class="enroll-row"><div style="flex:1;min-width:0;"><div class="er-course">'+esc(e.courseName||e.courseID)+'</div>';
         cr+='<div class="er-meta">開始: '+esc(e.startDate||'--')+ov+'</div></div>';
@@ -548,7 +548,7 @@ function renderDashboard(){
   if(document.getElementById('pane-dash').style.display==='none') return;
   var active=ALL_STUDENTS.filter(function(s){return s.isActive;});
   var activeEnrolls=ALL_ENROLL.filter(function(e){return e.isActive;});
-  var monthlyTotal=activeEnrolls.reduce(function(s,e){return s+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+  var monthlyTotal=activeEnrolls.reduce(function(s,e){return s+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
   var now=new Date();
   var joins=ALL_STUDENTS.filter(function(s){if(!s.joinDate)return false;var d=new Date(s.joinDate);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();}).length;
   var leaves=ALL_STUDENTS.filter(function(s){if(!s.leaveDate)return false;var d=new Date(s.leaveDate);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();}).length;
@@ -946,7 +946,7 @@ function renderChart(){
   keys.push((yr+1)+'年1月');
   var labels=keys.map(function(k){return k.replace(/^\d{4}年/,'');});
   var active=ALL_ENROLL.filter(function(e){return e.isActive;});
-  var enrollTotal=active.reduce(function(s,e){return s+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+  var enrollTotal=active.reduce(function(s,e){return s+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
 
   var billingData=keys.map(function(k){return (ALL_SALES[k]&&ALL_SALES[k].total>0)?ALL_SALES[k].total:0;});
   var actualData=keys.map(function(k){return (ALL_SALES[k]&&ALL_SALES[k].actual>0)?ALL_SALES[k].actual:0;});
@@ -1016,7 +1016,7 @@ function renderSalesDetail(){
   var isFuture=p&&new Date(parseInt(p[1]),parseInt(p[2])-1,2)>new Date();
   var salesData=ALL_SALES[salesMonth]||null;
   var active=ALL_ENROLL.filter(function(e){return e.isActive;});
-  var enrollTotal=active.reduce(function(s,e){return s+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+  var enrollTotal=active.reduce(function(s,e){return s+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
   var uids=[];active.forEach(function(e){if(uids.indexOf(e.studentID)<0)uids.push(e.studentID);});
   var target=ALL_TARGETS[salesMonth]||null;
   var h='';
@@ -1059,9 +1059,9 @@ function renderSalesDetail(){
     h+='<table class="stbl"><thead><tr><th>氏名</th><th>コース</th><th style="text-align:right">月謝</th></tr></thead><tbody>';
     sids.forEach(function(sid){
       var s=byS[sid];
-      var sub=s.courses.reduce(function(sum,e){return sum+(e.overridePrice!=null?e.overridePrice:e.standardPrice);},0);
+      var sub=s.courses.reduce(function(sum,e){return sum+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
       s.courses.forEach(function(e,i){
-        var price=e.overridePrice!=null?e.overridePrice:e.standardPrice;
+        var price=e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0;
         h+='<tr>';
         if(i===0)h+='<td rowspan="'+s.courses.length+'" style="font-weight:700;vertical-align:top;">'+esc(s.name)+'</td>';
         h+='<td>'+esc(e.courseName||e.courseID)+(e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:4px;">上書</span>':'')+'</td>';
