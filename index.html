@@ -7,7 +7,7 @@
 <title>Bridge 生徒管理</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<style>
+<style
 :root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;--accent:#e8a84c;--accent2:#f0c97a;--text:#e6edf3;--muted:#8b949e;--ok:#3fb950;--ng:#f85149;--r:12px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{width:100%;min-height:100vh;font-family:"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
@@ -500,7 +500,7 @@ function renderMgr(){
   var q=(document.getElementById('mgr-search').value||'').toLowerCase();
   var list=ALL_STUDENTS.filter(function(s){return s.isActive;});
   if(q)list=list.filter(function(s){return s.name.toLowerCase().indexOf(q)>=0;});
-  list.sort(function(a,b){return a.name.localeCompare(b.name,'ja');});
+  list.sort(function(a,b){return (a.yomi||a.name).localeCompare((b.yomi||b.name),'ja');});
   var el=document.getElementById('mgr-list');
   if(!list.length){el.innerHTML='<div class="empty">在籍中の生徒がいません</div>';return;}
   var h='';
@@ -1054,8 +1054,8 @@ function renderSalesDetail(){
   h+='<div class="stitle">在籍コース一覧（月謝詳細��</div>';
   if(active.length){
     var byS={};
-    active.forEach(function(e){if(!byS[e.studentID])byS[e.studentID]={name:e.studentName,courses:[]};byS[e.studentID].courses.push(e);});
-    var sids=Object.keys(byS).sort(function(a,b){return byS[a].name.localeCompare(byS[b].name,'ja');});
+    active.forEach(function(e){if(!byS[e.studentID]){var st=ALL_STUDENTS.find(function(s){return s.studentID===e.studentID;})||{};byS[e.studentID]={name:e.studentName,yomi:st.yomi||'',courses:[]};}byS[e.studentID].courses.push(e);});
+    var sids=Object.keys(byS).sort(function(a,b){return (byS[a].yomi||byS[a].name).localeCompare((byS[b].yomi||byS[b].name),'ja');});
     h+='<table class="stbl"><thead><tr><th>氏名</th><th>コース</th><th style="text-align:right">月謝</th></tr></thead><tbody>';
     sids.forEach(function(sid){
       var s=byS[sid];
