@@ -605,7 +605,7 @@ function buildCourseDistChart() {
   // ALL_ENROLLからカテゴリ別合計を集計
   const totals = [0, 0, 0, 0];
   ALL_ENROLL.filter(e => e.isActive).forEach(e => {
-    const price = e.overridePrice != null ? e.overridePrice : e.standardPrice;
+    const price = e.overridePrice != null ? +e.overridePrice||0 : +e.standardPrice||0;
     if (!price) return;
     for (let i = 0; i < PATTERNS.length; i++) {
       if (PATTERNS[i].test(e.courseName || '')) { totals[i] += price; break; }
