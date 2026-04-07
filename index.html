@@ -561,7 +561,7 @@ function renderDashboard(){
   h+='<div class="kpi-grid">';
   h+='<div class="kpi-card"><div class="kpi-label">在籍生徒数</div><div class="kpi-val">'+active.length+'<span style="font-size:14px;color:var(--muted);">名</span></div><div class="kpi-sub">平均在籍 <span class="ltv-val">'+avgMonths+'ヶ月</span></div></div>';
   h+='<div class="kpi-card"><div class="kpi-label">今月見込月額</div><div class="kpi-val" style="font-size:20px;">¥'+monthlyTotal.toLocaleString()+'</div><div class="kpi-sub" style="color:var(--muted);">在籍ベース</div></div>';
-  h+='<div class="kpi-card"><div class="kpi-label">今月 入会 / 退会</div><div class="kpi-val '+netClass+'">'+netStr+'</div><div class="kpi-sub">+'+joins+' / -'+leaves+'</div></div>';
+  h+='<div class="kpi-card"><div class="kpi-label">今月 入会 / 退会</div><div class="kpi-val '+netClass+'">'+netStr+'</div><div class="kpi-sub">+'+joins+' / -'+leaves+'</div></div>'
   h+='</div>';
   h+='<div class="dash-chart-wrap"><div class="dash-chart-title">入退会推移（直近6ヶ月）</div><canvas id="dash-trend-canvas" class="dash-chart-canvas"></canvas></div>';
   h+='<div class="dash-chart-wrap"><div class="dash-chart-title">コース別月額構成</div><div class="course-bar-wrap" id="course-dist"></div></div>';
