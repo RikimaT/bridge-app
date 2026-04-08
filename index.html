@@ -345,6 +345,8 @@ var MONTHS=['2月','3月','4月','5月','6月','7月','8月','9月','10月','11�
 var GAS_URL='https://script.google.com/macros/s/AKfycbzRJdGPE9wkGD7r8yx09OfLjYYOuDNPet6x5qsmYWxzivciEWIUNToJ1ff6ykLoASXeqQ/exec'
 var PAYMENT_GAS_URL='https://script.google.com/macros/s/AKfycbzRJdGPE9wkGD7r8yx09OfLjYYOuDNPet6x5qsmYWxzivciEWIUNToJ1ff6ykLoASXeqQ/exec';
 var ALL_STUDENTS=[],ALL_ENROLL=[],ALL_COURSES=[],ALL_SALES={},ALL_TRIALS=[],ALL_TARGETS={};
+var HISTORICAL_SALES={"2025年1月":{"total":813075,"actual":813075},"2025年2月":{"total":790775,"actual":790775},"2025年3月":{"total":902800,"actual":902800},"2025年4月":{"total":793850,"actual":790150},"2025年5月":{"total":735650,"actual":702675},"2025年6月":{"total":731350,"actual":737550},"2025年7月":{"total":861950,"actual":833750},"2025年8月":{"total":872750,"actual":811500},"2025年9月":{"total":1031200,"actual":1004550},"2025年10月":{"total":1017500,"actual":957950},"2025年11月":{"total":999900,"actual":974800},"2025年12月":{"total":1023700,"actual":1029900},"2026年1月":{"total":1015500,"actual":984500},"2026年2月":{"total":1026200,"actual":937250},"2026年3月":{"total":500850,"actual":446525},"2026年4月":{"total":466950,"actual":436625}};
+
 var regSel=[],addSel=[],addTargetID='',addTargetName='';
 var salesYear='',salesMonth='',salesMode='single',salesLoading=false,salesChartObj=null;
 var dashTrendChart=null,dashCourseChart=null;
@@ -910,8 +912,8 @@ async function loadSales(){
   try{
     var r=await gas('getSales');
     if(r.status!=='ok')throw new Error(r.message);
-    ALL_SALES=r.sales||{};buildSalesUI();
-  }catch(e){document.getElementById('s-content').innerHTML='<div class="empty">売上データ取得エラー: '+esc(e.message)+'<br><button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="loadSales()">再試行</button></div>';}
+    ALL_SALES=Object.assign({},HISTORICAL_SALES,r.sales||{});buildSalesUI();
+  }catch(e){ALL_SALES=Object.assign({},HISTORICAL_SALES);buildSalesUI();}
   finally{salesLoading=false;}
 }
 
