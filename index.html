@@ -342,8 +342,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 <script>
 var MONTHS=['2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月','1月'];
-var GAS_URL='https://script.google.com/macros/s/AKfycbzRJdGPE9wkGD7r8yx09OfLjYYOuDNPet6x5qsmYWxzivciEWIUNToJ1ff6ykLoASXeqQ/exec'
-var PAYMENT_GAS_URL='https://script.google.com/macros/s/AKfycbzRJdGPE9wkGD7r8yx09OfLjYYOuDNPet6x5qsmYWxzivciEWIUNToJ1ff6ykLoASXeqQ/exec';
+var GAS_URL='https://script.google.com/macros/s/AKfycbzp30OvZ1UOqIm2jPfAgbpwdLGia_Z4UGvAzrdpH3Pco32Ma3w1RJNL49z3JUUnY8Cz/exec'
+var PAYMENT_GAS_URL='https://script.google.com/macros/s/AKfycbzp30OvZ1UOqIm2jPfAgbpwdLGia_Z4UGvAzrdpH3Pco32Ma3w1RJNL49z3JUUnY8Cz/exec';
 var ALL_STUDENTS=[],ALL_ENROLL=[],ALL_COURSES=[],ALL_SALES={},ALL_TRIALS=[],ALL_TARGETS={};
 var regSel=[],addSel=[],addTargetID='',addTargetName='';
 var salesYear='',salesMonth='',salesMode='single',salesLoading=false,salesChartObj=null;
@@ -646,10 +646,39 @@ function buildCourseDistChart() {
     </div>
   `;
 
-  // Chart.jsでドーナツチャートを描画
+  // Chart.jsでドーナツチャートを描画（%ラベル付き）
   const ctx = document.getElementById('cat-donut');
   if (ctx && window.Chart) {
     if (window._catDonutChart) { window._catDonutChart.destroy(); }
+    const pctLabelPlugin = {
+      id: 'pctLabel',
+      afterDatasetDraw(chart) {
+        const { ctx: c, data } = chart;
+        const dataset = data.datasets[0];
+        const meta = chart.getDatasetMeta(0);
+        const total = dataset.data.reduce((s, v) => s + v, 0);
+        if (!total) return;
+        c.save();
+        meta.data.forEach((arc, i) => {
+          const val = dataset.data[i];
+          const pct = Math.round(val / total * 100);
+          if (pct < 5) return;
+          const angle = (arc.startAngle + arc.endAngle) / 2;
+          const r = (arc.innerRadius + arc.outerRadius) / 2;
+          const x = arc.x + Math.cos(angle) * r;
+          const y = arc.y + Math.sin(angle) * r;
+          c.fillStyle = '#fff';
+          c.font = 'bold 10px "Noto Sans JP", sans-serif';
+          c.textAlign = 'center';
+          c.textBaseline = 'middle';
+          c.shadowColor = 'rgba(0,0,0,0.5)';
+          c.shadowBlur = 3;
+          c.fillText(pct + '%', x, y);
+          c.shadowBlur = 0;
+        });
+        c.restore();
+      }
+    };
     window._catDonutChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -677,7 +706,8 @@ function buildCourseDistChart() {
           }
         },
         cutout: '60%'
-      }
+      },
+      plugins: [pctLabelPlugin]
     });
   }
 }
