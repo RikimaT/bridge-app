@@ -1132,8 +1132,9 @@ function loadPaymentForCurrentMonth(){
   _updatePayLabel();
   try{var stored=localStorage.getItem(_payKey(y,m));window._payData=stored?JSON.parse(stored):{};}catch(e){window._payData={};}
   renderMgr();
-  fetch(PAYMENT_GAS_URL+'?action=getPaymentData&year='+y+'&month='+m)
-    .then(function(r){return r.json();}).then(function(data){
+  fetch(PAYMENT_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'getPaymentData',year:y,month:m})
+    }).then(function(r){return r.json();}).then(function(data){
       var gasData={};
       (data.payments||[]).forEach(function(p){gasData[p.studentID]=p.paid;});
       window._payData=Object.assign({},window._payData,gasData);
@@ -1148,7 +1149,7 @@ function togglePayment(sid,checked){
   window._payData[sid]=checked;
   try{localStorage.setItem(_payKey(y,m),JSON.stringify(window._payData));}catch(e){}
   fetch(PAYMENT_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'savePaymentStatus',studentID:sid,year:y,month:m,paid:checked})
+    body:JSON.stringify({action:'savePaymentStatus',studentID:sid,studentName:sName,year:y,month:m,paid:checked,isPaid:checked})
   }).catch(function(e){console.error('pay save',e);});
 }
 
