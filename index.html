@@ -508,13 +508,13 @@ function renderMgr(){
   var h='';
   list.forEach(function(s){
     var enrolls=ALL_ENROLL.filter(function(e){return e.studentID===s.studentID&&e.isActive;});
-    var monthly=enrolls.reduce(function(sum,e){return sum+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
+    var monthly=enrolls.reduce(function(sum,e){return sum+((e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0);},0);
     var months=calcMonths(s.joinDate);
     var ltv=monthly*months;
     var cr='';
     if(enrolls.length){
       enrolls.forEach(function(e){
-        var price=e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0;
+        var price=(e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0;
         var ov=e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:5px;">上書</span>':'';
         cr+='<div class="enroll-row"><div style="flex:1;min-width:0;"><div class="er-course">'+esc(e.courseName||e.courseID)+'</div>';
         cr+='<div class="er-meta">開始: '+esc(e.startDate||'--')+ov+'</div></div>';
@@ -550,7 +550,7 @@ function renderDashboard(){
   if(document.getElementById('pane-dash').style.display==='none') return;
   var active=ALL_STUDENTS.filter(function(s){return s.isActive;});
   var activeEnrolls=ALL_ENROLL.filter(function(e){return e.isActive;});
-  var monthlyTotal=activeEnrolls.reduce(function(s,e){return s+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
+  var monthlyTotal=activeEnrolls.reduce(function(s,e){return s+((e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0);},0);
   var now=new Date();
   var joins=ALL_STUDENTS.filter(function(s){if(!s.joinDate)return false;var d=new Date(s.joinDate);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();}).length;
   var leaves=ALL_STUDENTS.filter(function(s){if(!s.leaveDate)return false;var d=new Date(s.leaveDate);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();}).length;
@@ -607,7 +607,7 @@ function buildCourseDistChart() {
   // ALL_ENROLLからカテゴリ別合計を集計
   const totals = [0, 0, 0, 0];
   ALL_ENROLL.filter(e => e.isActive).forEach(e => {
-    const price = e.overridePrice != null ? +e.overridePrice||0 : +e.standardPrice||0;
+    const price = (e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0;
     if (!price) return;
     for (let i = 0; i < PATTERNS.length; i++) {
       if (PATTERNS[i].test(e.courseName || '')) { totals[i] += price; break; }
@@ -978,7 +978,7 @@ function renderChart(){
   keys.push((yr+1)+'年1月');
   var labels=keys.map(function(k){return k.replace(/^\d{4}年/,'');});
   var active=ALL_ENROLL.filter(function(e){return e.isActive;});
-  var enrollTotal=active.reduce(function(s,e){return s+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
+  var enrollTotal=active.reduce(function(s,e){return s+((e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0);},0);
 
   var billingData=keys.map(function(k){return (ALL_SALES[k]&&ALL_SALES[k].total>0)?ALL_SALES[k].total:0;});
   var actualData=keys.map(function(k){return (ALL_SALES[k]&&ALL_SALES[k].actual>0)?ALL_SALES[k].actual:0;});
@@ -1048,7 +1048,7 @@ function renderSalesDetail(){
   var isFuture=p&&new Date(parseInt(p[1]),parseInt(p[2])-1,2)>new Date();
   var salesData=ALL_SALES[salesMonth]||null;
   var active=ALL_ENROLL.filter(function(e){return e.isActive;});
-  var enrollTotal=active.reduce(function(s,e){return s+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
+  var enrollTotal=active.reduce(function(s,e){return s+((e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0);},0);
   var uids=[];active.forEach(function(e){if(uids.indexOf(e.studentID)<0)uids.push(e.studentID);});
   var target=ALL_TARGETS[salesMonth]||null;
   var h='';
@@ -1091,9 +1091,9 @@ function renderSalesDetail(){
     h+='<table class="stbl"><thead><tr><th>氏名</th><th>コース</th><th style="text-align:right">月謝</th></tr></thead><tbody>';
     sids.forEach(function(sid){
       var s=byS[sid];
-      var sub=s.courses.reduce(function(sum,e){return sum+(e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0);},0);
+      var sub=s.courses.reduce(function(sum,e){return sum+((e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0);},0);
       s.courses.forEach(function(e,i){
-        var price=e.overridePrice!=null?+e.overridePrice||0:+e.standardPrice||0;
+        var price=(e.overridePrice!==null&&e.overridePrice!==undefined&&e.overridePrice!=='')?parseFloat(e.overridePrice)||0:parseFloat(e.standardPrice)||0;
         h+='<tr>';
         if(i===0)h+='<td rowspan="'+s.courses.length+'" style="font-weight:700;vertical-align:top;">'+esc(s.name)+'</td>';
         h+='<td>'+esc(e.courseName||e.courseID)+(e.overridePrice!=null?'<span style="font-size:10px;color:var(--accent);margin-left:4px;">上書</span>':'')+'</td>';
@@ -1132,15 +1132,22 @@ function loadPaymentForCurrentMonth(){
   _initPayMonth();
   var y=window._payYear,m=window._payMonth;
   _updatePayLabel();
-  try{var stored=localStorage.getItem(_payKey(y,m));window._payData=stored?JSON.parse(stored):{};}catch(e){window._payData={};}
+  // [修正] localStorageは使わずGASを正として初期化
+  window._payData={};
   renderMgr();
   fetch(PAYMENT_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'getPaymentData',year:y,month:m})
     }).then(function(r){return r.json();}).then(function(data){
       var gasData={};
-      (data.payments||[]).forEach(function(p){gasData[p.studentID]=p.paid;});
-      window._payData=Object.assign({},window._payData,gasData);
-      try{localStorage.setItem(_payKey(y,m),JSON.stringify(window._payData));}catch(e){}
+      // p.paidをbooleanに正規化（GASが"TRUE"/"FALSE"文字列を返す場合も対応）
+      (data.payments||[]).forEach(function(p){
+        var paidVal=p.paid;
+        if(typeof paidVal==='string'){paidVal=(paidVal.toUpperCase()==='TRUE');}
+        else{paidVal=!!paidVal;}
+        gasData[p.studentID]=paidVal;
+      });
+      // [修正] GASのデータをそのまま使用（端末依存のlocalStorageマージを廃止）
+      window._payData=gasData;
       renderMgr();
     }).catch(function(e){console.error('pay load',e);});
 }
@@ -1149,9 +1156,11 @@ function togglePayment(sid,checked){
   var y=window._payYear,m=window._payMonth;
   if(!window._payData)window._payData={};
   window._payData[sid]=checked;
-  try{localStorage.setItem(_payKey(y,m),JSON.stringify(window._payData));}catch(e){}
+  // [修正] studentNameをALL_STUDENTSから正しく取得
+  var student=ALL_STUDENTS.find(function(s){return s.studentID===sid;})||{};
+  var studentName=student.name||'';
   fetch(PAYMENT_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'savePaymentStatus',studentID:sid,studentName:sName,year:y,month:m,paid:checked,isPaid:checked})
+    body:JSON.stringify({action:'savePaymentStatus',studentID:sid,studentName:studentName,year:y,month:m,paid:checked,isPaid:checked})
   }).catch(function(e){console.error('pay save',e);});
 }
 
