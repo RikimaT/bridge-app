@@ -366,9 +366,15 @@ document.addEventListener('DOMContentLoaded',function(){
 
 async function gas(action,extra){
   extra=extra||{};
-  var r=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action},extra))});
-  var t=await r.text();
-  try{return JSON.parse(t);}catch(e){throw new Error('GAS応答エラー: '+t.slice(0,80));}
+  var body=JSON.stringify(Object.assign({action:action},extra||{}));
+  for(var attempt=0;attempt<3;attempt++){
+    var r=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body});
+    var t=await r.text();
+    try{return JSON.parse(t);}catch(e){
+      if(attempt<2){await new Promise(function(ok){setTimeout(ok,1000*(attempt+1));});continue;}
+      throw new Error('GAS応答エラー: '+t.slice(0,80));
+    }
+  }
 }
 
 function switchTab(id){
